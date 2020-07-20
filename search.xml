@@ -1,34 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>测试文章</title>
-    <url>/2020/07/13/%E6%B5%8B%E8%AF%95%E6%96%87%E7%AB%A0/</url>
-    <content><![CDATA[<p>pick me pick me up</p>
+    <title>Java异常（一）：异常类型</title>
+    <url>/2020/07/15/Java%E5%BC%82%E5%B8%B8%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9A%E5%BC%82%E5%B8%B8%E7%B1%BB%E5%9E%8B/</url>
+    <content><![CDATA[<p>在Java语言规范中，将派生于Error或者RuntimeException的异常称为Unchecked Exception（非受检异常），所有其他的异常则称为Checked Exception（受检异常）。<a id="more"></a></p>
+<h3 id="Checked-Exception"><a href="#Checked-Exception" class="headerlink" title="Checked Exception"></a>Checked Exception</h3><p>Checked Exception是开发者必须在代码中进行恰当处理的Exception，而且<strong>编译器会强制开发者对其进行处理</strong>，我们可以使用<code>catch</code>语句捕获这些异常，或者在方法声明处使用<code>throws</code>抛出该异常。</p>
+<p>通常情况下，Checked Exception的发生是超出开发者控制范围的，比如网络连接失败会抛出的<code>IOException</code>，但是我们的程序必须能够预料到这些可能发生的异常，并对其进行处理，保证程序不会在运行过程中崩溃，这也是编译器强制我们对Checked Exception进行处理的原因。假如在文件传输过程中网络中断，我们的程序应该能够捕获到这种异常并进行处理，尝试重新传输文件。</p>
+<p>当我们希望方法在被调用时需要明确地处理一些特殊情况时，就应该使用Checked Exception</p>
+<h3 id="Unchecked-Exception"><a href="#Unchecked-Exception" class="headerlink" title="Unchecked Exception"></a>Unchecked Exception</h3><p>Unchecked Exception的发生有一部分是因为开发者的代码逻辑错误造成的，比如<code>NullPointerException</code>这种可以通过检查是否为null来避免的异常。</p>
+<p>但是也有一部分跟开发者没关系，它们是<code>java.lang.Error</code>的子类，我们不能够预料这部分异常的发生，所以并<strong>不强制</strong>我们对其进行处理，但如果不捕获，在运行期间如果发生异常就会中断程序的执行。比如<code>OutOfMemoryError</code>可能发生在任意一个实例对象创建的时候，但我们不可能在每个实例对象创建的时候都使用<code>catch</code>语句去捕获异常。</p>
+<h3 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h3><p>下面的例子，由于我们没有对Checked Exception进行处理而导致编译失败。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UnhandledException</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> Exception();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>为了使上面的代码可以正确编译，我们可以在<code>try/catch</code>块中捕获相应的异常，或者使用<code>throws</code>在main方法声明处抛出异常。</p>
+<p>但是如果在main方法内部抛出一个Unchecked Exception，依然可以正确编译，如下面的例子，这是因为Unchecked Exception无法在编译期间被发现，所以即使不处理也能够正常编译。这点在IDE中也可以直接看到效果，如果是能够在编译期间被发现的异常，IDE会有所提示。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UnhandledException</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Exception类层次结构"><a href="#Exception类层次结构" class="headerlink" title="Exception类层次结构"></a>Exception类层次结构</h3><p><code>java.lang.Throwable</code>类是一个Checked Exception，它有两个子类：<code>java.lang.Exception</code>和<code>java.lang.Error</code>，Error类是Unchecked Exception，Exception类则是Checked Exception</p>
+<p>。</p>
+<p>Exception类有一个Unchecked Exception子类：<code>java.lang.RuntimeException</code>，像<code>NullPointerException</code>和<code>ClassCastException</code>都是RuntimeException的子类。RuntimeException和Error的所有子类都是Unchecked Exception，其他的则都是Checked Exception，如下图所示。</p>
+<p><img src="/2020/07/15/Java%E5%BC%82%E5%B8%B8%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9A%E5%BC%82%E5%B8%B8%E7%B1%BB%E5%9E%8B/exception-class-hierarchy.png" alt="exception-class-hierarchy"></p>
+<p>如果我们自定义一个异常类，那它是Checked Exception还是Unchecked Exception取决于其父类的类型。在对Checked Exception进行catch操作时，需要遵循一定的规则：在catch块中捕获的异常，必须在try块中有出现这种异常的可能性。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    System.out.println(<span class="string">"..."</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span>(java.io.IOException ioe) &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面的例子并不能编译成功，这是因为在try块中永远不会抛出IOException。但如果catch块中捕获的是一个Unchecked Exception，那么就不会有这种问题，因为编译器不能检查出Unchecked Exception，那么它倾向于认为catch块中的捕获是能够捕获到的。</p>
+<p>Exception和Throwable这两个类比较特殊，虽然它们都是Checked Exception，但是我们依然可以在catch块中捕获它们，即使它们并没有在try块中抛出异常的可能性，比如下面的代码就能够正常编译。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    System.out.println(<span class="string">"..."</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span>(Exception ex) &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Exception和Throwable之所以比较特殊是因为它们这两个类都有Unchecked Exception类型的子类，所以编译器允许我们捕获它们（编译器认为我们在捕获的是Unchecked Exception）。</p>
+<h3 id="JVM和程序异常"><a href="#JVM和程序异常" class="headerlink" title="JVM和程序异常"></a>JVM和程序异常</h3><p>JVM Exception是由JVM自己抛出的异常。例如，我们调用null对象的方法时，JVM会抛出<code>NullPointerException</code>,或者出现10除以0的情况时，JVM会抛出<code>ArithmeticException</code>，这些异常都是由JVM自动抛出的。</p>
+<p>除了JVM异常，其他的都是程序异常。我们可以显式使用<code>throw</code>抛出异常，比如<code>NumberFormatException</code>可能被方法<code>Integer.parseInt</code>或<code>Float.parseFloat</code>抛出，都是程序异常，我们可以在Integer类的parseInt方法的实现中找到以下声明：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (s == <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> NumberFormatException(<span class="string">"null"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>JVM不会主动抛出这种类型的异常（程序异常），这些异常都是在程序中使用<code>throw</code>显式抛出，当然也可以在程序中显式抛出JVM Exception，如下所示：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (s == <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"I told you s shouldn't be null"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>但通常来说，JVM Exception是不会被开发者抛出的，一般由JVM自己主动抛出，所有的JVM Exception都是Unchecked Exception，而程序异常则可能是Checked Exception或Unchecked Exception。</p>
+<h3 id="争论"><a href="#争论" class="headerlink" title="争论"></a>争论</h3><p>关于Checked Exception和Unchecked Exception其实争论是比较大的，Checked Exception的本意是在编译时检查是否存在异常处理程序，强制开发者对异常进行处理，从而减少未正确处理的异常数量。但是，也有观点支持Unchecked Exception，认为沿调用栈向上传播的Checked Exception破坏了顶层的方法，因为这些方法必须声明抛出所有它们调用的方法抛出的异常，而且过多的try/catch块并不能提高开发者的工作效率，还影响代码可读性，Unchecked Exception可以将异常处理集中在少数几个类进行处理，减少无用的try/catch代码块。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>Checked Exception必须被显式地捕获或者抛出，而Unchecked Exception则可以不必捕获或抛出。两者从功能的角度来看是等价的，并不存在哪个更强大，选择哪个的原因更多还是看个人习惯或者组织规定问题。    </p>
+<br>
+
+<p>参考：</p>
+<p>1、<a href="http://www.hacktrix.com/checked-and-unchecked-exceptions-in-java" target="_blank" rel="noopener">Checked and Unchecked Exceptions in Java</a></p>
+<p>2、<a href="https://blog.csdn.net/kingzone_2008/article/details/8535287" target="_blank" rel="noopener">Java异常：选择Checked Exception还是Unchecked Exception?</a></p>
+<p>3、<a href="https://docs.oracle.com/javase/specs/jls/se14/html/jls-11.html#jls-11.2" target="_blank" rel="noopener">Compile-Time Checking of Exceptions</a></p>
 ]]></content>
       <categories>
-        <category>cat1</category>
+        <category>Java</category>
       </categories>
       <tags>
-        <tag>tag1</tag>
-        <tag>tag2</tag>
+        <tag>异常</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>Hello World</title>
-    <url>/2020/07/12/hello-world/</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html" target="_blank" rel="noopener">Deployment</a></p>
-]]></content>
   </entry>
 </search>
