@@ -9,7 +9,7 @@
     
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>
-    Java异常（一）：异常类型 |  KorbinC
+    Java异常类型 |  KorbinC
   </title>
   <meta name="generator" content="hexo-theme-ayer">
   
@@ -44,7 +44,7 @@
     <main class="content on">
       <section class="outer">
   <article
-  id="post-Java异常（一）：异常类型"
+  id="post-Java异常类型"
   class="article article-type-post"
   itemscope
   itemprop="blogPost"
@@ -55,14 +55,14 @@
     <header class="article-header">
        
 <h1 class="article-title sea-center" style="border-left:0" itemprop="name">
-  Java异常（一）：异常类型
+  Java异常类型
 </h1>
  
 
     </header>
      
     <div class="article-meta">
-      <a href="/2020/07/15/Java%E5%BC%82%E5%B8%B8%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9A%E5%BC%82%E5%B8%B8%E7%B1%BB%E5%9E%8B/" class="article-date">
+      <a href="/2020/07/15/Java%E5%BC%82%E5%B8%B8%E7%B1%BB%E5%9E%8B/" class="article-date">
   <time datetime="2020-07-14T16:00:00.000Z" itemprop="datePublished">2020-07-15</time>
 </a> 
   <div class="article-category">
@@ -114,7 +114,7 @@
 <h3 id="Exception类层次结构"><a href="#Exception类层次结构" class="headerlink" title="Exception类层次结构"></a>Exception类层次结构</h3><p><code>java.lang.Throwable</code>类是一个Checked Exception，它有两个子类：<code>java.lang.Exception</code>和<code>java.lang.Error</code>，Error类是Unchecked Exception，Exception类则是Checked Exception</p>
 <p>。</p>
 <p>Exception类有一个Unchecked Exception子类：<code>java.lang.RuntimeException</code>，像<code>NullPointerException</code>和<code>ClassCastException</code>都是RuntimeException的子类。RuntimeException和Error的所有子类都是Unchecked Exception，其他的则都是Checked Exception，如下图所示。</p>
-<p><img src="/2020/07/15/Java%E5%BC%82%E5%B8%B8%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9A%E5%BC%82%E5%B8%B8%E7%B1%BB%E5%9E%8B/exception-class-hierarchy.png" alt="exception-class-hierarchy"></p>
+<p><img src="/2020/07/15/Java%E5%BC%82%E5%B8%B8%E7%B1%BB%E5%9E%8B/exception-class-hierarchy.png" alt="exception-class-hierarchy"></p>
 <p>如果我们自定义一个异常类，那它是Checked Exception还是Unchecked Exception取决于其父类的类型。在对Checked Exception进行catch操作时，需要遵循一定的规则：在catch块中捕获的异常，必须在try块中有出现这种异常的可能性。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    System.out.println(<span class="string">"..."</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span>(java.io.IOException ioe) &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Java异常（一）：异常类型</title>
-    <url>/2020/07/15/Java%E5%BC%82%E5%B8%B8%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9A%E5%BC%82%E5%B8%B8%E7%B1%BB%E5%9E%8B/</url>
+    <title>Java异常类型</title>
+    <url>/2020/07/15/Java%E5%BC%82%E5%B8%B8%E7%B1%BB%E5%9E%8B/</url>
     <content><![CDATA[<p>在Java语言规范中，将派生于Error或者RuntimeException的异常称为Unchecked Exception（非受检异常），所有其他的异常则称为Checked Exception（受检异常）。<a id="more"></a></p>
 <h3 id="Checked-Exception"><a href="#Checked-Exception" class="headerlink" title="Checked Exception"></a>Checked Exception</h3><p>Checked Exception是开发者必须在代码中进行恰当处理的Exception，而且<strong>编译器会强制开发者对其进行处理</strong>，我们可以使用<code>catch</code>语句捕获这些异常，或者在方法声明处使用<code>throws</code>抛出该异常。</p>
 <p>通常情况下，Checked Exception的发生是超出开发者控制范围的，比如网络连接失败会抛出的<code>IOException</code>，但是我们的程序必须能够预料到这些可能发生的异常，并对其进行处理，保证程序不会在运行过程中崩溃，这也是编译器强制我们对Checked Exception进行处理的原因。假如在文件传输过程中网络中断，我们的程序应该能够捕获到这种异常并进行处理，尝试重新传输文件。</p>
@@ -19,7 +19,7 @@
 <h3 id="Exception类层次结构"><a href="#Exception类层次结构" class="headerlink" title="Exception类层次结构"></a>Exception类层次结构</h3><p><code>java.lang.Throwable</code>类是一个Checked Exception，它有两个子类：<code>java.lang.Exception</code>和<code>java.lang.Error</code>，Error类是Unchecked Exception，Exception类则是Checked Exception</p>
 <p>。</p>
 <p>Exception类有一个Unchecked Exception子类：<code>java.lang.RuntimeException</code>，像<code>NullPointerException</code>和<code>ClassCastException</code>都是RuntimeException的子类。RuntimeException和Error的所有子类都是Unchecked Exception，其他的则都是Checked Exception，如下图所示。</p>
-<p><img src="/2020/07/15/Java%E5%BC%82%E5%B8%B8%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9A%E5%BC%82%E5%B8%B8%E7%B1%BB%E5%9E%8B/exception-class-hierarchy.png" alt="exception-class-hierarchy"></p>
+<p><img src="/2020/07/15/Java%E5%BC%82%E5%B8%B8%E7%B1%BB%E5%9E%8B/exception-class-hierarchy.png" alt="exception-class-hierarchy"></p>
 <p>如果我们自定义一个异常类，那它是Checked Exception还是Unchecked Exception取决于其父类的类型。在对Checked Exception进行catch操作时，需要遵循一定的规则：在catch块中捕获的异常，必须在try块中有出现这种异常的可能性。</p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    System.out.println(<span class="string">"..."</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span>(java.io.IOException ioe) &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
