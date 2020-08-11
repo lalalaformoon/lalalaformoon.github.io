@@ -9,7 +9,7 @@
     
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>
-    快速弄懂分布式和微服务的关系 |  KorbinC
+    Dubbo框架介绍 |  KorbinC
   </title>
   <meta name="generator" content="hexo-theme-ayer">
   
@@ -44,7 +44,7 @@
     <main class="content on">
       <section class="outer">
   <article
-  id="post-快速弄懂分布式和微服务的关系"
+  id="post-Dubbo框架介绍"
   class="article article-type-post"
   itemscope
   itemprop="blogPost"
@@ -55,18 +55,18 @@
     <header class="article-header">
        
 <h1 class="article-title sea-center" style="border-left:0" itemprop="name">
-  快速弄懂分布式和微服务的关系
+  Dubbo框架介绍
 </h1>
  
 
     </header>
      
     <div class="article-meta">
-      <a href="/2020/08/10/%E5%BF%AB%E9%80%9F%E5%BC%84%E6%87%82%E5%88%86%E5%B8%83%E5%BC%8F%E5%92%8C%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%85%B3%E7%B3%BB/" class="article-date">
-  <time datetime="2020-08-09T16:00:00.000Z" itemprop="datePublished">2020-08-10</time>
+      <a href="/2020/08/11/Dubbo%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/" class="article-date">
+  <time datetime="2020-08-10T16:00:00.000Z" itemprop="datePublished">2020-08-11</time>
 </a> 
   <div class="article-category">
-    <a class="article-category-link" href="/categories/%E6%9E%B6%E6%9E%84/">架构</a>
+    <a class="article-category-link" href="/categories/%E6%A1%86%E6%9E%B6/">框架</a>
   </div>
   
 <div class="word_count">
@@ -74,7 +74,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">841</span>
+            <span class="post-count">1.5k</span>
         </span>
     </span>
 
@@ -83,7 +83,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">2 分钟</span>
+            <span class="post-count">5 分钟</span>
         </span>
     </span>
 </div>
@@ -98,16 +98,72 @@
   
     <div class="article-entry" itemprop="articleBody">
        
-  <p>分布式和微服务是什么关系？简单来说，分布式和微服务的概念比较相似，微服务是一种特殊的分布式。但是分布式和微服务在架构、作用和粒度上有所区别。因此，两者的关系是既相互联系又相互区别。<a id="more"></a></p>
-<h3 id="微服务"><a href="#微服务" class="headerlink" title="微服务"></a>微服务</h3><p>微服务的意思是将模块拆分成一个个独立的服务单元，通过接口来实现数据的交互。简单来说微服务就是很小的服务，小到一个服务只对应一个<strong>单一的功能</strong>，只做一件事。这个服务可以单独部署运行，服务之间可以通过RPC来进行交互，每个微服务都是由独立的小团队开发，测试，部署，上线，负责它的整个生命周期。</p>
-<h3 id="分布式"><a href="#分布式" class="headerlink" title="分布式"></a>分布式</h3><p>分布式服务指服务是分散部署在不同的机器上的，一个服务可能负责<strong>几个功能</strong>，是一种面向SOA架构的，服务之间也是通过RPC来交互或者是WebService来交互的。逻辑架构设计完后就该做物理架构设计，系统应用部署在超过一台服务器或虚拟机上，且各分开部署的部分彼此通过各种通讯协议交互信息，就可算作分布式部署。生产环境下的微服务肯定是分布式部署的，分布式部署的应用不一定是微服务架构的，比如集群部署，它是把相同应用复制到不同服务器上，但是逻辑功能上还是单体应用。</p>
-<h3 id="关系"><a href="#关系" class="headerlink" title="关系"></a>关系</h3><p>分布式只是一种手段，把不同的机器分散在不同的地方，然后这些机器间相互协助完成业务。微服务是一种特殊的分布式，换句话说，微服务架构是分布式服务架构的子集。微服务架构通过更细粒度的服务切分，使得整个系统的迭代速度并行程度更高，但是运维的复杂度和性能会随着服务的粒度更细而增加。微服务重在解耦合，使每个模块都独立。分布式重在资源共享与加快计算机计算速度。</p>
-<h3 id="区别"><a href="#区别" class="headerlink" title="区别"></a>区别</h3><p>（1）架构不同：微服务的设计是为了不因为某个模块的升级和BUG影响现有的系统业务。微服务与分布式的细微差别是，微服务的应用不一定是分散在多个服务器上，他也可以是同一个服务器。</p>
-<p>（2）作用不同：分布式是不同模块部署在不同服务器上，分布式主要解决的是网站高并发带来问题。微服务是各服务可独立应用，组合服务也可系统应用。</p>
-<p>（3）粒度不同：微服务相比分布式服务来说，它的粒度更小，服务之间耦合度更低，由于每个微服务都由独立的小团队负责，因此它敏捷性更高。</p>
+  <p>Dubbo是阿里巴巴公司开源的一款高性能Java RPC框架，提供了三个核心能力：面向接口的远程方法调用，智能容错和负载均衡，以及服务自动注册和发现。<a id="more"></a></p>
+<h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>随着互联网的发展，网站应用的规模不断扩大，常规的垂直应用架构已无法应对，分布式服务架构以及流动计算架构势在必行，亟需一个治理系统确保架构有条不紊的演进。</p>
+<p><img src="/2020/08/11/Dubbo%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/%E6%9E%B6%E6%9E%84%E6%BC%94%E8%BF%9B.jpg" alt="架构演进"></p>
+<h5 id="单一应用结构"><a href="#单一应用结构" class="headerlink" title="单一应用结构"></a>单一应用结构</h5><p>当网站流量很小时，只需一个应用，将所有功能都部署在一起，以减少部署节点和成本。此时，用于简化增删改查工作量的数据访问框架(ORM)是关键。</p>
+<h5 id="垂直应用架构"><a href="#垂直应用架构" class="headerlink" title="垂直应用架构"></a>垂直应用架构</h5><p>当访问量逐渐增大，单一应用增加机器带来的加速度越来越小，提升效率的方法之一是将应用拆成互不相干的几个应用，以提升效率。此时，用于加速前端页面开发的Web框架(MVC)是关键。</p>
+<h5 id="分布式服务架构"><a href="#分布式服务架构" class="headerlink" title="分布式服务架构"></a>分布式服务架构</h5><p>当垂直应用越来越多，应用之间交互不可避免，将核心业务抽取出来，作为独立的服务，逐渐形成稳定的服务中心，使前端应用能更快速的响应多变的市场需求。此时，用于提高业务复用及整合的分布式服务框架(RPC)是关键。</p>
+<h5 id="流动计算架构"><a href="#流动计算架构" class="headerlink" title="流动计算架构"></a>流动计算架构</h5><p>当服务越来越多，容量的评估，小服务资源的浪费等问题逐渐显现，此时需增加一个调度中心基于访问压力实时管理集群容量，提高集群利用率。此时，用于提高机器利用率的资源调度和治理中心(SOA)是关键。</p>
+<h3 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h3><p><img src="/2020/08/11/Dubbo%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/dubbo-service-governance.jpg" alt="Dubbo服务治理"></p>
+<p>在大规模服务化之前，应用可能只是通过 RMI 或 Hessian 等工具，简单的暴露和引用远程服务，通过配置服务的URL地址进行调用，通过 F5 等硬件进行负载均衡。</p>
+<p><strong>当服务越来越多时，服务 URL 配置管理变得非常困难，F5 硬件负载均衡器的单点压力也越来越大。</strong> 此时需要一个服务注册中心，动态地注册和发现服务，使服务的位置透明。并通过在消费方获取服务提供方地址列表，实现软负载均衡和 Failover，降低对 F5 硬件负载均衡器的依赖，也能减少部分成本。</p>
+<p><strong>当进一步发展，服务间依赖关系变得错踪复杂，甚至分不清哪个应用要在哪个应用之前启动，架构师都不能完整的描述应用的架构关系。</strong> 这时，需要自动画出应用间的依赖关系图，以帮助架构师理清关系。</p>
+<p><strong>接着，服务的调用量越来越大，服务的容量问题就暴露出来，这个服务需要多少机器支撑？什么时候该加机器？</strong> 为了解决这些问题，第一步，要将服务现在每天的调用量，响应时间，都统计出来，作为容量规划的参考指标。其次，要可以动态调整权重，在线上，将某台机器的权重一直加大，并在加大的过程中记录响应时间的变化，直到响应时间到达阈值，记录此时的访问量，再以此访问量乘以机器数反推总容量。</p>
+<p>以上是 Dubbo 最基本的几个需求。</p>
+<h3 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h3><p><img src="/2020/08/11/Dubbo%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/architecture.png" alt="Dubbo架构"></p>
+<h5 id="节点说明"><a href="#节点说明" class="headerlink" title="节点说明"></a>节点说明</h5><table>
+<thead>
+<tr>
+<th>节点</th>
+<th>角色说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Provider</td>
+<td>暴露服务的服务提供方</td>
+</tr>
+<tr>
+<td>Consumer</td>
+<td>调用远程服务的服务消费方</td>
+</tr>
+<tr>
+<td>Registry</td>
+<td>服务注册与发现的注册中心</td>
+</tr>
+<tr>
+<td>Monitor</td>
+<td>统计服务的调用次数和调用时间的监控中心</td>
+</tr>
+<tr>
+<td>Container</td>
+<td>服务运行容器</td>
+</tr>
+</tbody></table>
+<h5 id="调用关系说明"><a href="#调用关系说明" class="headerlink" title="调用关系说明"></a>调用关系说明</h5><p>​    0. 服务容器负责启动，加载，运行服务提供者。</p>
+<p>​    1. 服务提供者在启动时，向注册中心注册自己提供的服务。</p>
+<p>​    2. 服务消费者在启动时，向注册中心订阅自己所需的服务。</p>
+<p>​    3. 注册中心返回服务提供者地址列表给消费者，如果有变更，注册中心将基于长连接推送变更数据给消费者。</p>
+<p>​    4.服务消费者，从提供者地址列表中，基于软负载均衡算法，选一台提供者进行调用，如果调用失败，再选另一台调用。</p>
+<p>​    5.服务消费者和提供者，在内存中累计调用次数和调用时间，定时每分钟发送一次统计数据到监控中心。</p>
+<h3 id="用法"><a href="#用法" class="headerlink" title="用法"></a>用法</h3><h5 id="本地服务-Spring-配置"><a href="#本地服务-Spring-配置" class="headerlink" title="本地服务 Spring 配置"></a>本地服务 Spring 配置</h5><p>local.xml:</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">“xxxService”</span> <span class="attr">class</span>=<span class="string">“com.xxx.XxxServiceImpl”</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">“xxxAction”</span> <span class="attr">class</span>=<span class="string">“com.xxx.XxxAction”</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">“xxxService”</span> <span class="attr">ref</span>=<span class="string">“xxxService”</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="远程服务-Spring-配置"><a href="#远程服务-Spring-配置" class="headerlink" title="远程服务 Spring 配置"></a>远程服务 Spring 配置</h5><p>在本地服务的基础上，只需做简单配置，即可完成远程化：</p>
+<ul>
+<li>将上面的 <code>local.xml</code> 配置拆分成两份，将服务定义部分放在服务提供方 <code>remote-provider.xml</code>，将服务引用部分放在服务消费方 <code>remote-consumer.xml</code>。</li>
+<li>并在提供方增加暴露服务配置 <code>&lt;dubbo:service&gt;</code>，在消费方增加引用服务配置 <code>&lt;dubbo:reference&gt;</code>。</li>
+</ul>
+<p>remote-provider.xml:</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 和本地服务一样实现远程服务 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">“xxxService”</span> <span class="attr">class</span>=<span class="string">“com.xxx.XxxServiceImpl”</span> /&gt;</span> </span><br><span class="line"><span class="comment">&lt;!-- 增加暴露远程服务配置 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dubbo:service</span> <span class="attr">interface</span>=<span class="string">“com.xxx.XxxService”</span> <span class="attr">ref</span>=<span class="string">“xxxService”</span> /&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>remote-consumer.xml:</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 增加引用远程服务配置 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dubbo:reference</span> <span class="attr">id</span>=<span class="string">“xxxService”</span> <span class="attr">interface</span>=<span class="string">“com.xxx.XxxService”</span> /&gt;</span></span><br><span class="line"><span class="comment">&lt;!-- 和本地服务一样使用远程服务 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">“xxxAction”</span> <span class="attr">class</span>=<span class="string">“com.xxx.XxxAction”</span>&gt;</span> </span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">“xxxService”</span> <span class="attr">ref</span>=<span class="string">“xxxService”</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
 <br>
 
-<p>分布式服务最后都会向微服务架构演化，这是一种趋势， 不过服务微服务化后带来的挑战也是显而易见的，例如服务粒度小，数量大，后期运维将会很难。</p>
+<p>参考：</p>
+<p><a href="http://dubbo.apache.org/zh-cn/" target="_blank" rel="noopener">Dubbo官方文档</a></p>
  
       <!-- reward -->
       
@@ -132,7 +188,7 @@
     
     <footer class="article-footer">
        
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" rel="tag">微服务</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Dubbo/" rel="tag">Dubbo</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/RPC/" rel="tag">RPC</a></li></ul>
 
     </footer>
   </div>
@@ -140,19 +196,10 @@
    
   <nav class="article-nav">
     
-      <a href="/2020/08/11/Dubbo%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/" class="article-nav-link">
-        <strong class="article-nav-caption">上一篇</strong>
-        <div class="article-nav-title">
-          
-            Dubbo框架介绍
-          
-        </div>
-      </a>
     
-    
-      <a href="/2020/07/15/Java%E5%BC%82%E5%B8%B8%E7%B1%BB%E5%9E%8B/" class="article-nav-link">
+      <a href="/2020/08/10/%E5%BF%AB%E9%80%9F%E5%BC%84%E6%87%82%E5%88%86%E5%B8%83%E5%BC%8F%E5%92%8C%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%85%B3%E7%B3%BB/" class="article-nav-link">
         <strong class="article-nav-caption">下一篇</strong>
-        <div class="article-nav-title">Java异常类型</div>
+        <div class="article-nav-title">快速弄懂分布式和微服务的关系</div>
       </a>
     
   </nav>
