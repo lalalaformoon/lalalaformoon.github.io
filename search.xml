@@ -1,77 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Java异常类型</title>
-    <url>/2020/07/15/Java%E5%BC%82%E5%B8%B8%E7%B1%BB%E5%9E%8B/</url>
-    <content><![CDATA[<p>在Java语言规范中，将派生于Error或者RuntimeException的异常称为Unchecked Exception（非受检异常），所有其他的异常则称为Checked Exception（受检异常）。<a id="more"></a></p>
-<h3 id="Checked-Exception"><a href="#Checked-Exception" class="headerlink" title="Checked Exception"></a>Checked Exception</h3><p>Checked Exception是开发者必须在代码中进行恰当处理的Exception，而且<strong>编译器会强制开发者对其进行处理</strong>，我们可以使用<code>catch</code>语句捕获这些异常，或者在方法声明处使用<code>throws</code>抛出该异常。</p>
-<p>通常情况下，Checked Exception的发生是超出开发者控制范围的，比如网络连接失败会抛出的<code>IOException</code>，但是我们的程序必须能够预料到这些可能发生的异常，并对其进行处理，保证程序不会在运行过程中崩溃，这也是编译器强制我们对Checked Exception进行处理的原因。假如在文件传输过程中网络中断，我们的程序应该能够捕获到这种异常并进行处理，尝试重新传输文件。</p>
-<p>当我们希望方法在被调用时需要明确地处理一些特殊情况时，就应该使用Checked Exception</p>
-<h3 id="Unchecked-Exception"><a href="#Unchecked-Exception" class="headerlink" title="Unchecked Exception"></a>Unchecked Exception</h3><p>Unchecked Exception的发生有一部分是因为开发者的代码逻辑错误造成的，比如<code>NullPointerException</code>这种可以通过检查是否为null来避免的异常。</p>
-<p>但是也有一部分跟开发者没关系，它们是<code>java.lang.Error</code>的子类，我们不能够预料这部分异常的发生，所以并<strong>不强制</strong>我们对其进行处理，但如果不捕获，在运行期间如果发生异常就会中断程序的执行。比如<code>OutOfMemoryError</code>可能发生在任意一个实例对象创建的时候，但我们不可能在每个实例对象创建的时候都使用<code>catch</code>语句去捕获异常。</p>
-<h3 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h3><p>下面的例子，由于我们没有对Checked Exception进行处理而导致编译失败。</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UnhandledException</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> Exception();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>为了使上面的代码可以正确编译，我们可以在<code>try/catch</code>块中捕获相应的异常，或者使用<code>throws</code>在main方法声明处抛出异常。</p>
-<p>但是如果在main方法内部抛出一个Unchecked Exception，依然可以正确编译，如下面的例子，这是因为Unchecked Exception无法在编译期间被发现，所以即使不处理也能够正常编译。这点在IDE中也可以直接看到效果，如果是能够在编译期间被发现的异常，IDE会有所提示。</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UnhandledException</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="Exception类层次结构"><a href="#Exception类层次结构" class="headerlink" title="Exception类层次结构"></a>Exception类层次结构</h3><p><code>java.lang.Throwable</code>类是一个Checked Exception，它有两个子类：<code>java.lang.Exception</code>和<code>java.lang.Error</code>，Error类是Unchecked Exception，Exception类则是Checked Exception</p>
-<p>。</p>
-<p>Exception类有一个Unchecked Exception子类：<code>java.lang.RuntimeException</code>，像<code>NullPointerException</code>和<code>ClassCastException</code>都是RuntimeException的子类。RuntimeException和Error的所有子类都是Unchecked Exception，其他的则都是Checked Exception，如下图所示。</p>
-<p><img src="/2020/07/15/Java%E5%BC%82%E5%B8%B8%E7%B1%BB%E5%9E%8B/exception-class-hierarchy.png" alt="exception-class-hierarchy"></p>
-<p>如果我们自定义一个异常类，那它是Checked Exception还是Unchecked Exception取决于其父类的类型。在对Checked Exception进行catch操作时，需要遵循一定的规则：在catch块中捕获的异常，必须在try块中有出现这种异常的可能性。</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    System.out.println(<span class="string">"..."</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span>(java.io.IOException ioe) &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>上面的例子并不能编译成功，这是因为在try块中永远不会抛出IOException。但如果catch块中捕获的是一个Unchecked Exception，那么就不会有这种问题，因为编译器不能检查出Unchecked Exception，那么它倾向于认为catch块中的捕获是能够捕获到的。</p>
-<p>Exception和Throwable这两个类比较特殊，虽然它们都是Checked Exception，但是我们依然可以在catch块中捕获它们，即使它们并没有在try块中抛出异常的可能性，比如下面的代码就能够正常编译。</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    System.out.println(<span class="string">"..."</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span>(Exception ex) &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>Exception和Throwable之所以比较特殊是因为它们这两个类都有Unchecked Exception类型的子类，所以编译器允许我们捕获它们（编译器认为我们在捕获的是Unchecked Exception）。</p>
-<h3 id="JVM和程序异常"><a href="#JVM和程序异常" class="headerlink" title="JVM和程序异常"></a>JVM和程序异常</h3><p>JVM Exception是由JVM自己抛出的异常。例如，我们调用null对象的方法时，JVM会抛出<code>NullPointerException</code>,或者出现10除以0的情况时，JVM会抛出<code>ArithmeticException</code>，这些异常都是由JVM自动抛出的。</p>
-<p>除了JVM异常，其他的都是程序异常。我们可以显式使用<code>throw</code>抛出异常，比如<code>NumberFormatException</code>可能被方法<code>Integer.parseInt</code>或<code>Float.parseFloat</code>抛出，都是程序异常，我们可以在Integer类的parseInt方法的实现中找到以下声明：</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (s == <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> NumberFormatException(<span class="string">"null"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>JVM不会主动抛出这种类型的异常（程序异常），这些异常都是在程序中使用<code>throw</code>显式抛出，当然也可以在程序中显式抛出JVM Exception，如下所示：</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (s == <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"I told you s shouldn't be null"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>但通常来说，JVM Exception是不会被开发者抛出的，一般由JVM自己主动抛出，所有的JVM Exception都是Unchecked Exception，而程序异常则可能是Checked Exception或Unchecked Exception。</p>
-<h3 id="争论"><a href="#争论" class="headerlink" title="争论"></a>争论</h3><p>关于Checked Exception和Unchecked Exception其实争论是比较大的，Checked Exception的本意是在编译时检查是否存在异常处理程序，强制开发者对异常进行处理，从而减少未正确处理的异常数量。但是，也有观点支持Unchecked Exception，认为沿调用栈向上传播的Checked Exception破坏了顶层的方法，因为这些方法必须声明抛出所有它们调用的方法抛出的异常，而且过多的try/catch块并不能提高开发者的工作效率，还影响代码可读性，Unchecked Exception可以将异常处理集中在少数几个类进行处理，减少无用的try/catch代码块。</p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>Checked Exception必须被显式地捕获或者抛出，而Unchecked Exception则可以不必捕获或抛出。两者从功能的角度来看是等价的，并不存在哪个更强大，选择哪个的原因更多还是看个人习惯或者组织规定问题。    </p>
-<br>
-
-<p>参考：</p>
-<p>1、<a href="http://www.hacktrix.com/checked-and-unchecked-exceptions-in-java" target="_blank" rel="noopener">Checked and Unchecked Exceptions in Java</a></p>
-<p>2、<a href="https://blog.csdn.net/kingzone_2008/article/details/8535287" target="_blank" rel="noopener">Java异常：选择Checked Exception还是Unchecked Exception?</a></p>
-<p>3、<a href="https://docs.oracle.com/javase/specs/jls/se14/html/jls-11.html#jls-11.2" target="_blank" rel="noopener">Compile-Time Checking of Exceptions</a></p>
+    <title>Maven基础</title>
+    <url>/2020/08/30/Maven%E5%9F%BA%E7%A1%80/</url>
+    <content><![CDATA[<p>Maven是一个项目管理工具，它包含了一个项目对象模型 (Project Object Model)，一组标准集合，一个项目生命周期(Project Lifecycle)，一个依赖管理系统(Dependency Management System)，和用来运行定义在生命周期阶段(phase)中插件(plugin)目标(goal)的逻辑。<a id="more"></a></p>
+<h3 id="Maven能做什么"><a href="#Maven能做什么" class="headerlink" title="Maven能做什么"></a>Maven能做什么</h3><p>构建工程，管理jar包，编译代码，自动运行单元测试，打包，生成报表，部署项目，生成Web站点。</p>
+<h3 id="Maven优势"><a href="#Maven优势" class="headerlink" title="Maven优势"></a>Maven优势</h3><p>传统web项目，jar包在项目中；</p>
+<p>maven开发的项目，jar包不在项目中，而是根据jar包的坐标从jar包仓库中查找。</p>
+<p>能够减少项目磁盘空间（特别是多个项目的时候，传统下每个项目都有jar包，maven是共用仓库中的）。</p>
+<h3 id="项目的一键构建"><a href="#项目的一键构建" class="headerlink" title="项目的一键构建"></a>项目的一键构建</h3><p>项目从编译、测试、运行、打包、安装、部署整个过程都可以交给maven进行管理，这个过程称为构建。</p>
+<p>maven规范化构建流程如下：</p>
+<p>清理  —&gt;   编译  —&gt;   测试  —&gt;   报告  —&gt;   打包  —&gt;   部署</p>
+<h3 id="仓库种类和彼此关系"><a href="#仓库种类和彼此关系" class="headerlink" title="仓库种类和彼此关系"></a>仓库种类和彼此关系</h3><p>仓库分三类：本地仓库，远程仓库（私服），中央仓库</p>
+<p>默认情况下：先找本地，本地没有再去中央</p>
+<p>公司使用：先找本地，本地没有找远程，远程可以从本地和中央下jar包</p>
+<h3 id="maven标准目录结构"><a href="#maven标准目录结构" class="headerlink" title="maven标准目录结构"></a>maven标准目录结构</h3><p>项目可分为：核心代码部分，配置文件部分，测试代码部分，测试配置文件部分</p>
+<p>maven目录结构：</p>
+<p>src/main/java  核心代码部分</p>
+<p>src/main/resources  配置文件部分</p>
+<p>src/test/java  测试代码部分</p>
+<p>src/test/resources  测试配置文件部分</p>
+<p>src/main/webapp  页面资源，js，css，图片等</p>
+<h3 id="maven常用命令"><a href="#maven常用命令" class="headerlink" title="maven常用命令"></a>maven常用命令</h3><p>mvn clean   清除项目编译信息，删除target文件夹</p>
+<p>mvn compile   编译正式的代码，创建target文件夹</p>
+<p>mvn test   编译正式的代码和测试文件夹下的代码</p>
+<p>mvn package   对项目正式、测试的代码进行编译，同时打包并放置于target文件夹</p>
+<p>mvn install   相当于mvn package后，将生成的包安装到本地仓库</p>
+<h3 id="maven生命周期"><a href="#maven生命周期" class="headerlink" title="maven生命周期"></a>maven生命周期</h3><p>清理生命周期：</p>
+<p>clean</p>
+<p>默认生命周期：</p>
+<p>编译（compile）</p>
+<p>测试（test）</p>
+<p>打包（package）</p>
+<p>安装（install）</p>
+<p>发布（deploy）</p>
+<p>每一步命令都会包含前面所有的命令</p>
+<h3 id="maven概念模型图"><a href="#maven概念模型图" class="headerlink" title="maven概念模型图"></a>maven概念模型图</h3><p><img src="/2020/08/30/Maven%E5%9F%BA%E7%A1%80/maven%E6%A6%82%E5%BF%B5%E6%A8%A1%E5%9E%8B%E5%9B%BE.jpg" alt></p>
+<p>项目对象模型（POM）包括：</p>
+<p>项目自身信息、项目运行所依赖的jar包信息、项目运行环境信息，比如jdk、tomcat信息</p>
+<p>依赖管理模型（Dependency）：</p>
+<p>公司组织的名称、项目名、版本号</p>
+<p>一键构建：</p>
+<p>每一个构造项目的命令都对应了maven底层一个插件</p>
+<h3 id="maven依赖范围"><a href="#maven依赖范围" class="headerlink" title="maven依赖范围"></a>maven依赖范围</h3><table>
+<thead>
+<tr>
+<th>依赖范围</th>
+<th>对于编译classpath有效</th>
+<th>对于测试classpath有效</th>
+<th>对于运行classpath有效</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>compile</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>spring-core</td>
+</tr>
+<tr>
+<td>test</td>
+<td>-</td>
+<td>Y</td>
+<td>-</td>
+<td>Junit</td>
+</tr>
+<tr>
+<td>provided</td>
+<td>Y</td>
+<td>Y</td>
+<td>-</td>
+<td>servlet-api</td>
+</tr>
+<tr>
+<td>runtime</td>
+<td>-</td>
+<td>Y</td>
+<td>Y</td>
+<td>JDBC</td>
+</tr>
+<tr>
+<td>system</td>
+<td>Y</td>
+<td>Y</td>
+<td>-</td>
+<td>本地仓库之外的类库</td>
+</tr>
+</tbody></table>
 ]]></content>
       <categories>
-        <category>Java</category>
+        <category>工具</category>
       </categories>
       <tags>
-        <tag>异常</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>快速弄懂分布式和微服务的关系</title>
-    <url>/2020/08/10/%E5%BF%AB%E9%80%9F%E5%BC%84%E6%87%82%E5%88%86%E5%B8%83%E5%BC%8F%E5%92%8C%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%85%B3%E7%B3%BB/</url>
-    <content><![CDATA[<p>分布式和微服务是什么关系？简单来说，分布式和微服务的概念比较相似，微服务是一种特殊的分布式。但是分布式和微服务在架构、作用和粒度上有所区别。因此，两者的关系是既相互联系又相互区别。<a id="more"></a></p>
-<h3 id="微服务"><a href="#微服务" class="headerlink" title="微服务"></a>微服务</h3><p>微服务的意思是将模块拆分成一个个独立的服务单元，通过接口来实现数据的交互。简单来说微服务就是很小的服务，小到一个服务只对应一个<strong>单一的功能</strong>，只做一件事。这个服务可以单独部署运行，服务之间可以通过RPC来进行交互，每个微服务都是由独立的小团队开发，测试，部署，上线，负责它的整个生命周期。</p>
-<h3 id="分布式"><a href="#分布式" class="headerlink" title="分布式"></a>分布式</h3><p>分布式服务指服务是分散部署在不同的机器上的，一个服务可能负责<strong>几个功能</strong>，是一种面向SOA架构的，服务之间也是通过RPC来交互或者是WebService来交互的。逻辑架构设计完后就该做物理架构设计，系统应用部署在超过一台服务器或虚拟机上，且各分开部署的部分彼此通过各种通讯协议交互信息，就可算作分布式部署。生产环境下的微服务肯定是分布式部署的，分布式部署的应用不一定是微服务架构的，比如集群部署，它是把相同应用复制到不同服务器上，但是逻辑功能上还是单体应用。</p>
-<h3 id="关系"><a href="#关系" class="headerlink" title="关系"></a>关系</h3><p>分布式只是一种手段，把不同的机器分散在不同的地方，然后这些机器间相互协助完成业务。微服务是一种特殊的分布式，换句话说，微服务架构是分布式服务架构的子集。微服务架构通过更细粒度的服务切分，使得整个系统的迭代速度并行程度更高，但是运维的复杂度和性能会随着服务的粒度更细而增加。微服务重在解耦合，使每个模块都独立。分布式重在资源共享与加快计算机计算速度。</p>
-<h3 id="区别"><a href="#区别" class="headerlink" title="区别"></a>区别</h3><p>（1）架构不同：微服务的设计是为了不因为某个模块的升级和BUG影响现有的系统业务。微服务与分布式的细微差别是，微服务的应用不一定是分散在多个服务器上，他也可以是同一个服务器。</p>
-<p>（2）作用不同：分布式是不同模块部署在不同服务器上，分布式主要解决的是网站高并发带来问题。微服务是各服务可独立应用，组合服务也可系统应用。</p>
-<p>（3）粒度不同：微服务相比分布式服务来说，它的粒度更小，服务之间耦合度更低，由于每个微服务都由独立的小团队负责，因此它敏捷性更高。</p>
-<br>
-
-<p>分布式服务最后都会向微服务架构演化，这是一种趋势， 不过服务微服务化后带来的挑战也是显而易见的，例如服务粒度小，数量大，后期运维将会很难。</p>
-]]></content>
-      <categories>
-        <category>架构</category>
-      </categories>
-      <tags>
-        <tag>分布式</tag>
-        <tag>微服务</tag>
+        <tag>Maven</tag>
       </tags>
   </entry>
   <entry>
@@ -150,6 +172,80 @@
       <tags>
         <tag>Dubbo</tag>
         <tag>RPC</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>快速弄懂分布式和微服务的关系</title>
+    <url>/2020/08/10/%E5%BF%AB%E9%80%9F%E5%BC%84%E6%87%82%E5%88%86%E5%B8%83%E5%BC%8F%E5%92%8C%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%85%B3%E7%B3%BB/</url>
+    <content><![CDATA[<p>分布式和微服务是什么关系？简单来说，分布式和微服务的概念比较相似，微服务是一种特殊的分布式。但是分布式和微服务在架构、作用和粒度上有所区别。因此，两者的关系是既相互联系又相互区别。<a id="more"></a></p>
+<h3 id="微服务"><a href="#微服务" class="headerlink" title="微服务"></a>微服务</h3><p>微服务的意思是将模块拆分成一个个独立的服务单元，通过接口来实现数据的交互。简单来说微服务就是很小的服务，小到一个服务只对应一个<strong>单一的功能</strong>，只做一件事。这个服务可以单独部署运行，服务之间可以通过RPC来进行交互，每个微服务都是由独立的小团队开发，测试，部署，上线，负责它的整个生命周期。</p>
+<h3 id="分布式"><a href="#分布式" class="headerlink" title="分布式"></a>分布式</h3><p>分布式服务指服务是分散部署在不同的机器上的，一个服务可能负责<strong>几个功能</strong>，是一种面向SOA架构的，服务之间也是通过RPC来交互或者是WebService来交互的。逻辑架构设计完后就该做物理架构设计，系统应用部署在超过一台服务器或虚拟机上，且各分开部署的部分彼此通过各种通讯协议交互信息，就可算作分布式部署。生产环境下的微服务肯定是分布式部署的，分布式部署的应用不一定是微服务架构的，比如集群部署，它是把相同应用复制到不同服务器上，但是逻辑功能上还是单体应用。</p>
+<h3 id="关系"><a href="#关系" class="headerlink" title="关系"></a>关系</h3><p>分布式只是一种手段，把不同的机器分散在不同的地方，然后这些机器间相互协助完成业务。微服务是一种特殊的分布式，换句话说，微服务架构是分布式服务架构的子集。微服务架构通过更细粒度的服务切分，使得整个系统的迭代速度并行程度更高，但是运维的复杂度和性能会随着服务的粒度更细而增加。微服务重在解耦合，使每个模块都独立。分布式重在资源共享与加快计算机计算速度。</p>
+<h3 id="区别"><a href="#区别" class="headerlink" title="区别"></a>区别</h3><p>（1）架构不同：微服务的设计是为了不因为某个模块的升级和BUG影响现有的系统业务。微服务与分布式的细微差别是，微服务的应用不一定是分散在多个服务器上，他也可以是同一个服务器。</p>
+<p>（2）作用不同：分布式是不同模块部署在不同服务器上，分布式主要解决的是网站高并发带来问题。微服务是各服务可独立应用，组合服务也可系统应用。</p>
+<p>（3）粒度不同：微服务相比分布式服务来说，它的粒度更小，服务之间耦合度更低，由于每个微服务都由独立的小团队负责，因此它敏捷性更高。</p>
+<br>
+
+<p>分布式服务最后都会向微服务架构演化，这是一种趋势， 不过服务微服务化后带来的挑战也是显而易见的，例如服务粒度小，数量大，后期运维将会很难。</p>
+]]></content>
+      <categories>
+        <category>架构</category>
+      </categories>
+      <tags>
+        <tag>分布式</tag>
+        <tag>微服务</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Java异常类型</title>
+    <url>/2020/07/15/Java%E5%BC%82%E5%B8%B8%E7%B1%BB%E5%9E%8B/</url>
+    <content><![CDATA[<p>在Java语言规范中，将派生于Error或者RuntimeException的异常称为Unchecked Exception（非受检异常），所有其他的异常则称为Checked Exception（受检异常）。<a id="more"></a></p>
+<h3 id="Checked-Exception"><a href="#Checked-Exception" class="headerlink" title="Checked Exception"></a>Checked Exception</h3><p>Checked Exception是开发者必须在代码中进行恰当处理的Exception，而且<strong>编译器会强制开发者对其进行处理</strong>，我们可以使用<code>catch</code>语句捕获这些异常，或者在方法声明处使用<code>throws</code>抛出该异常。</p>
+<p>通常情况下，Checked Exception的发生是超出开发者控制范围的，比如网络连接失败会抛出的<code>IOException</code>，但是我们的程序必须能够预料到这些可能发生的异常，并对其进行处理，保证程序不会在运行过程中崩溃，这也是编译器强制我们对Checked Exception进行处理的原因。假如在文件传输过程中网络中断，我们的程序应该能够捕获到这种异常并进行处理，尝试重新传输文件。</p>
+<p>当我们希望方法在被调用时需要明确地处理一些特殊情况时，就应该使用Checked Exception</p>
+<h3 id="Unchecked-Exception"><a href="#Unchecked-Exception" class="headerlink" title="Unchecked Exception"></a>Unchecked Exception</h3><p>Unchecked Exception的发生有一部分是因为开发者的代码逻辑错误造成的，比如<code>NullPointerException</code>这种可以通过检查是否为null来避免的异常。</p>
+<p>但是也有一部分跟开发者没关系，它们是<code>java.lang.Error</code>的子类，我们不能够预料这部分异常的发生，所以并<strong>不强制</strong>我们对其进行处理，但如果不捕获，在运行期间如果发生异常就会中断程序的执行。比如<code>OutOfMemoryError</code>可能发生在任意一个实例对象创建的时候，但我们不可能在每个实例对象创建的时候都使用<code>catch</code>语句去捕获异常。</p>
+<h3 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h3><p>下面的例子，由于我们没有对Checked Exception进行处理而导致编译失败。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UnhandledException</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> Exception();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>为了使上面的代码可以正确编译，我们可以在<code>try/catch</code>块中捕获相应的异常，或者使用<code>throws</code>在main方法声明处抛出异常。</p>
+<p>但是如果在main方法内部抛出一个Unchecked Exception，依然可以正确编译，如下面的例子，这是因为Unchecked Exception无法在编译期间被发现，所以即使不处理也能够正常编译。这点在IDE中也可以直接看到效果，如果是能够在编译期间被发现的异常，IDE会有所提示。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UnhandledException</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Exception类层次结构"><a href="#Exception类层次结构" class="headerlink" title="Exception类层次结构"></a>Exception类层次结构</h3><p><code>java.lang.Throwable</code>类是一个Checked Exception，它有两个子类：<code>java.lang.Exception</code>和<code>java.lang.Error</code>，Error类是Unchecked Exception，Exception类则是Checked Exception</p>
+<p>。</p>
+<p>Exception类有一个Unchecked Exception子类：<code>java.lang.RuntimeException</code>，像<code>NullPointerException</code>和<code>ClassCastException</code>都是RuntimeException的子类。RuntimeException和Error的所有子类都是Unchecked Exception，其他的则都是Checked Exception，如下图所示。</p>
+<p><img src="/2020/07/15/Java%E5%BC%82%E5%B8%B8%E7%B1%BB%E5%9E%8B/exception-class-hierarchy.png" alt="exception-class-hierarchy"></p>
+<p>如果我们自定义一个异常类，那它是Checked Exception还是Unchecked Exception取决于其父类的类型。在对Checked Exception进行catch操作时，需要遵循一定的规则：在catch块中捕获的异常，必须在try块中有出现这种异常的可能性。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    System.out.println(<span class="string">"..."</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span>(java.io.IOException ioe) &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面的例子并不能编译成功，这是因为在try块中永远不会抛出IOException。但如果catch块中捕获的是一个Unchecked Exception，那么就不会有这种问题，因为编译器不能检查出Unchecked Exception，那么它倾向于认为catch块中的捕获是能够捕获到的。</p>
+<p>Exception和Throwable这两个类比较特殊，虽然它们都是Checked Exception，但是我们依然可以在catch块中捕获它们，即使它们并没有在try块中抛出异常的可能性，比如下面的代码就能够正常编译。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    System.out.println(<span class="string">"..."</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span>(Exception ex) &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Exception和Throwable之所以比较特殊是因为它们这两个类都有Unchecked Exception类型的子类，所以编译器允许我们捕获它们（编译器认为我们在捕获的是Unchecked Exception）。</p>
+<h3 id="JVM和程序异常"><a href="#JVM和程序异常" class="headerlink" title="JVM和程序异常"></a>JVM和程序异常</h3><p>JVM Exception是由JVM自己抛出的异常。例如，我们调用null对象的方法时，JVM会抛出<code>NullPointerException</code>,或者出现10除以0的情况时，JVM会抛出<code>ArithmeticException</code>，这些异常都是由JVM自动抛出的。</p>
+<p>除了JVM异常，其他的都是程序异常。我们可以显式使用<code>throw</code>抛出异常，比如<code>NumberFormatException</code>可能被方法<code>Integer.parseInt</code>或<code>Float.parseFloat</code>抛出，都是程序异常，我们可以在Integer类的parseInt方法的实现中找到以下声明：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (s == <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> NumberFormatException(<span class="string">"null"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>JVM不会主动抛出这种类型的异常（程序异常），这些异常都是在程序中使用<code>throw</code>显式抛出，当然也可以在程序中显式抛出JVM Exception，如下所示：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (s == <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"I told you s shouldn't be null"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>但通常来说，JVM Exception是不会被开发者抛出的，一般由JVM自己主动抛出，所有的JVM Exception都是Unchecked Exception，而程序异常则可能是Checked Exception或Unchecked Exception。</p>
+<h3 id="争论"><a href="#争论" class="headerlink" title="争论"></a>争论</h3><p>关于Checked Exception和Unchecked Exception其实争论是比较大的，Checked Exception的本意是在编译时检查是否存在异常处理程序，强制开发者对异常进行处理，从而减少未正确处理的异常数量。但是，也有观点支持Unchecked Exception，认为沿调用栈向上传播的Checked Exception破坏了顶层的方法，因为这些方法必须声明抛出所有它们调用的方法抛出的异常，而且过多的try/catch块并不能提高开发者的工作效率，还影响代码可读性，Unchecked Exception可以将异常处理集中在少数几个类进行处理，减少无用的try/catch代码块。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>Checked Exception必须被显式地捕获或者抛出，而Unchecked Exception则可以不必捕获或抛出。两者从功能的角度来看是等价的，并不存在哪个更强大，选择哪个的原因更多还是看个人习惯或者组织规定问题。    </p>
+<br>
+
+<p>参考：</p>
+<p>1、<a href="http://www.hacktrix.com/checked-and-unchecked-exceptions-in-java" target="_blank" rel="noopener">Checked and Unchecked Exceptions in Java</a></p>
+<p>2、<a href="https://blog.csdn.net/kingzone_2008/article/details/8535287" target="_blank" rel="noopener">Java异常：选择Checked Exception还是Unchecked Exception?</a></p>
+<p>3、<a href="https://docs.oracle.com/javase/specs/jls/se14/html/jls-11.html#jls-11.2" target="_blank" rel="noopener">Compile-Time Checking of Exceptions</a></p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>异常</tag>
       </tags>
   </entry>
 </search>

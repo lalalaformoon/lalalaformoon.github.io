@@ -9,7 +9,7 @@
     
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>
-    归档: 2020/8 |  KorbinC
+    Maven基础 |  KorbinC
   </title>
   <meta name="generator" content="hexo-theme-ayer">
   
@@ -43,92 +43,191 @@
       
     <main class="content on">
       <section class="outer">
-  <article class="articles">
+  <article
+  id="post-Maven基础"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
     
-    
-    <h1 class="page-type-title">2020/8</h1>
-    
-    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Maven基础
+</h1>
+ 
+
+    </header>
+     
+    <div class="article-meta">
+      <a href="/2020/08/30/Maven%E5%9F%BA%E7%A1%80/" class="article-date">
+  <time datetime="2020-08-29T16:00:00.000Z" itemprop="datePublished">2020-08-30</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a>
+  </div>
   
-  
-  
-  
-  
-  
-  <div class="archives-wrap">
-    <div class="archive-year-wrap">
-      <a href="/archives/2020" class="archive-year">2020</a>
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">740</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">2 分钟</span>
+        </span>
+    </span>
+</div>
+ 
     </div>
-    <div class="archives">
       
-      <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2020/08/30/Maven%E5%9F%BA%E7%A1%80/" class="archive-article-date">
-  <time datetime="2020-08-29T16:00:00.000Z" itemprop="datePublished">08/30</time>
-</a>
-       
-<h2 itemprop="name">
-  <a class="archive-article-title" href="/2020/08/30/Maven%E5%9F%BA%E7%A1%80/"
-    >Maven基础</a> 
-</h2>
- 
+    <div class="tocbot"></div>
 
-    </header>
-    
-    
-  </div>
-</article>
-      
-  
-  
-      <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2020/08/11/Dubbo%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/" class="archive-article-date">
-  <time datetime="2020-08-10T16:00:00.000Z" itemprop="datePublished">08/11</time>
-</a>
-       
-<h2 itemprop="name">
-  <a class="archive-article-title" href="/2020/08/11/Dubbo%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/"
-    >Dubbo框架介绍</a> 
-</h2>
- 
 
-    </header>
-    
-    
-  </div>
-</article>
-      
-  
-  
-      <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2020/08/10/%E5%BF%AB%E9%80%9F%E5%BC%84%E6%87%82%E5%88%86%E5%B8%83%E5%BC%8F%E5%92%8C%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%85%B3%E7%B3%BB/" class="archive-article-date">
-  <time datetime="2020-08-09T16:00:00.000Z" itemprop="datePublished">08/10</time>
-</a>
-       
-<h2 itemprop="name">
-  <a class="archive-article-title" href="/2020/08/10/%E5%BF%AB%E9%80%9F%E5%BC%84%E6%87%82%E5%88%86%E5%B8%83%E5%BC%8F%E5%92%8C%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%85%B3%E7%B3%BB/"
-    >快速弄懂分布式和微服务的关系</a> 
-</h2>
- 
 
-    </header>
-    
-    
-  </div>
-</article>
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <p>Maven是一个项目管理工具，它包含了一个项目对象模型 (Project Object Model)，一组标准集合，一个项目生命周期(Project Lifecycle)，一个依赖管理系统(Dependency Management System)，和用来运行定义在生命周期阶段(phase)中插件(plugin)目标(goal)的逻辑。<a id="more"></a></p>
+<h3 id="Maven能做什么"><a href="#Maven能做什么" class="headerlink" title="Maven能做什么"></a>Maven能做什么</h3><p>构建工程，管理jar包，编译代码，自动运行单元测试，打包，生成报表，部署项目，生成Web站点。</p>
+<h3 id="Maven优势"><a href="#Maven优势" class="headerlink" title="Maven优势"></a>Maven优势</h3><p>传统web项目，jar包在项目中；</p>
+<p>maven开发的项目，jar包不在项目中，而是根据jar包的坐标从jar包仓库中查找。</p>
+<p>能够减少项目磁盘空间（特别是多个项目的时候，传统下每个项目都有jar包，maven是共用仓库中的）。</p>
+<h3 id="项目的一键构建"><a href="#项目的一键构建" class="headerlink" title="项目的一键构建"></a>项目的一键构建</h3><p>项目从编译、测试、运行、打包、安装、部署整个过程都可以交给maven进行管理，这个过程称为构建。</p>
+<p>maven规范化构建流程如下：</p>
+<p>清理  —&gt;   编译  —&gt;   测试  —&gt;   报告  —&gt;   打包  —&gt;   部署</p>
+<h3 id="仓库种类和彼此关系"><a href="#仓库种类和彼此关系" class="headerlink" title="仓库种类和彼此关系"></a>仓库种类和彼此关系</h3><p>仓库分三类：本地仓库，远程仓库（私服），中央仓库</p>
+<p>默认情况下：先找本地，本地没有再去中央</p>
+<p>公司使用：先找本地，本地没有找远程，远程可以从本地和中央下jar包</p>
+<h3 id="maven标准目录结构"><a href="#maven标准目录结构" class="headerlink" title="maven标准目录结构"></a>maven标准目录结构</h3><p>项目可分为：核心代码部分，配置文件部分，测试代码部分，测试配置文件部分</p>
+<p>maven目录结构：</p>
+<p>src/main/java  核心代码部分</p>
+<p>src/main/resources  配置文件部分</p>
+<p>src/test/java  测试代码部分</p>
+<p>src/test/resources  测试配置文件部分</p>
+<p>src/main/webapp  页面资源，js，css，图片等</p>
+<h3 id="maven常用命令"><a href="#maven常用命令" class="headerlink" title="maven常用命令"></a>maven常用命令</h3><p>mvn clean   清除项目编译信息，删除target文件夹</p>
+<p>mvn compile   编译正式的代码，创建target文件夹</p>
+<p>mvn test   编译正式的代码和测试文件夹下的代码</p>
+<p>mvn package   对项目正式、测试的代码进行编译，同时打包并放置于target文件夹</p>
+<p>mvn install   相当于mvn package后，将生成的包安装到本地仓库</p>
+<h3 id="maven生命周期"><a href="#maven生命周期" class="headerlink" title="maven生命周期"></a>maven生命周期</h3><p>清理生命周期：</p>
+<p>clean</p>
+<p>默认生命周期：</p>
+<p>编译（compile）</p>
+<p>测试（test）</p>
+<p>打包（package）</p>
+<p>安装（install）</p>
+<p>发布（deploy）</p>
+<p>每一步命令都会包含前面所有的命令</p>
+<h3 id="maven概念模型图"><a href="#maven概念模型图" class="headerlink" title="maven概念模型图"></a>maven概念模型图</h3><p><img src="/2020/08/30/Maven%E5%9F%BA%E7%A1%80/maven%E6%A6%82%E5%BF%B5%E6%A8%A1%E5%9E%8B%E5%9B%BE.jpg" alt></p>
+<p>项目对象模型（POM）包括：</p>
+<p>项目自身信息、项目运行所依赖的jar包信息、项目运行环境信息，比如jdk、tomcat信息</p>
+<p>依赖管理模型（Dependency）：</p>
+<p>公司组织的名称、项目名、版本号</p>
+<p>一键构建：</p>
+<p>每一个构造项目的命令都对应了maven底层一个插件</p>
+<h3 id="maven依赖范围"><a href="#maven依赖范围" class="headerlink" title="maven依赖范围"></a>maven依赖范围</h3><table>
+<thead>
+<tr>
+<th>依赖范围</th>
+<th>对于编译classpath有效</th>
+<th>对于测试classpath有效</th>
+<th>对于运行classpath有效</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>compile</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>spring-core</td>
+</tr>
+<tr>
+<td>test</td>
+<td>-</td>
+<td>Y</td>
+<td>-</td>
+<td>Junit</td>
+</tr>
+<tr>
+<td>provided</td>
+<td>Y</td>
+<td>Y</td>
+<td>-</td>
+<td>servlet-api</td>
+</tr>
+<tr>
+<td>runtime</td>
+<td>-</td>
+<td>Y</td>
+<td>Y</td>
+<td>JDBC</td>
+</tr>
+<tr>
+<td>system</td>
+<td>Y</td>
+<td>Y</td>
+<td>-</td>
+<td>本地仓库之外的类库</td>
+</tr>
+</tbody></table>
+ 
+      <!-- reward -->
       
+      <div id="reward-btn">
+        打赏
+      </div>
       
     </div>
-  </div>
-  
-  
+    
 
-  
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Maven/" rel="tag">Maven</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/08/11/Dubbo%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Dubbo框架介绍</div>
+      </a>
+    
+  </nav>
+
+   
+ 
+     
+</article>
+
 </section>
       <footer class="footer">
   <div class="outer">
@@ -253,6 +352,23 @@
 <script src="/js/lazyload.min.js"></script>
 
 <!-- Tocbot -->
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
