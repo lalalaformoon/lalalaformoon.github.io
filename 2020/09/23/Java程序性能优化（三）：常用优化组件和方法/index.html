@@ -9,7 +9,7 @@
     
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>
-    Tag: 设计模式 |  KorbinC
+    Java程序性能优化（三）：常用优化组件和方法 |  KorbinC
   </title>
   <meta name="generator" content="hexo-theme-ayer">
   
@@ -43,54 +43,126 @@
       
     <main class="content on">
       <section class="outer">
-  <article class="articles">
+  <article
+  id="post-Java程序性能优化（三）：常用优化组件和方法"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
     
-    
-    <h1 class="page-type-title">#&nbsp设计模式</h1>
-    
-    
-  
-  
-  
-  
-  
-  
-  <div class="archives-wrap">
-    <div class="archive-year-wrap">
-      <a href="/archives/2020" class="archive-year">2020</a>
-    </div>
-    <div class="archives">
-      
-      <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2020/09/17/Java%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9A%E8%AE%BE%E8%AE%A1%E4%BC%98%E5%8C%96%E4%B9%8B%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" class="archive-article-date">
-  <time datetime="2020-09-16T16:00:00.000Z" itemprop="datePublished">09/17</time>
-</a>
+    <header class="article-header">
        
-<h2 itemprop="name">
-  <a class="archive-article-title" href="/2020/09/17/Java%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9A%E8%AE%BE%E8%AE%A1%E4%BC%98%E5%8C%96%E4%B9%8B%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"
-    >Java程序性能优化（二）：设计优化之设计模式</a> 
-</h2>
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Java程序性能优化（三）：常用优化组件和方法
+</h1>
  
 
     </header>
-    
-    
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" rel="tag">性能优化</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a></li></ul>
-
-    
+     
+    <div class="article-meta">
+      <a href="/2020/09/23/Java%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E5%B8%B8%E7%94%A8%E4%BC%98%E5%8C%96%E7%BB%84%E4%BB%B6%E5%92%8C%E6%96%B9%E6%B3%95/" class="article-date">
+  <time datetime="2020-09-22T16:00:00.000Z" itemprop="datePublished">2020-09-23</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/Java/">Java</a>
   </div>
-</article>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">691</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">2 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
       
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <p>本篇文章是葛一鸣《Java程序性能优化》读书笔记的第三篇，主要内容有常用的优化组件和方法，以及常用的优化思想。<a id="more"></a></p>
+<h3 id="缓冲（Buffer）"><a href="#缓冲（Buffer）" class="headerlink" title="缓冲（Buffer）"></a>缓冲（Buffer）</h3><p>缓冲区是一块特定的内存区域，能够缓解应用程序上下层之间的性能差异，提供系统的性能。缓冲最常用的场景是提供I/O的速度，JDK的很多I/O组件都提供了缓冲功能，如BufferedWriter。</p>
+<p>缓冲区不宜过小，过小无法起到缓冲作用，也不宜过大，过大会浪费系统内存，增加GC负担。</p>
+<p>由于I/O操作很容易成为性能瓶颈，故尽可能在I/O读写中加入缓冲组件，以提高系统的性能。</p>
+<h3 id="缓存（Cache）"><a href="#缓存（Cache）" class="headerlink" title="缓存（Cache）"></a>缓存（Cache）</h3><p>缓存也是一块为了提高系统性能而开辟的内存空间，主要作用是暂存数据处理结果，并提供下次访问使用。缓存可以保存一些来之不易的数据或计算结果，当需要再次使用时，可以从缓冲中低成本地获取，而不需要再占用宝贵的系统资源。</p>
+<h3 id="池"><a href="#池" class="headerlink" title="池"></a>池</h3><p>对象池化是一种非常常用的系统优化技术，核心思想是：如果一个类被频繁请求使用，那么不必每次都生成一个实例，可以将这个类的一些实例保存在一个池中，待需要使用的时候直接从池中获取。如线程池和数据库连接池。</p>
+<p>对于经常使用，并且创建很费时的大型对象来说，可以使用对象池维护，这样不仅可以节省获得对象实例的成本，还可以减轻GC频繁回收这些对象产生的系统压力。</p>
+<h3 id="并行替代串行"><a href="#并行替代串行" class="headerlink" title="并行替代串行"></a>并行替代串行</h3><p>传统的串行程序比较不能发挥CPU的最大潜能，而并行可以将CPU性能发挥到极致。</p>
+<h3 id="负载均衡"><a href="#负载均衡" class="headerlink" title="负载均衡"></a>负载均衡</h3><p>如果应用并发数很多，单台计算机就无法承受，为了保证应用的服务质量，需要使用多台机器协同工作，将系统负载尽可能均匀地分配到各个机器上。</p>
+<h3 id="时间换空间"><a href="#时间换空间" class="headerlink" title="时间换空间"></a>时间换空间</h3><p>通常用于嵌入式设备，或者内存、硬盘空间不足的情况，通过牺牲CPU来获得原本需要更多内存或者硬盘空间才能完成的工作。</p>
+<h3 id="空间换时间"><a href="#空间换时间" class="headerlink" title="空间换时间"></a>空间换时间</h3><p>尝试使用更多的内存或者磁盘空间换取CPU资源或者网络资源，通过增加系统的内存消耗，来加快程序的运行速度。典型应用是缓存，在一些算法中也会选择空间换时间。</p>
+ 
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
       
     </div>
-  </div>
-  
-  
+    
 
-  
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" rel="tag">性能优化</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="/2020/09/24/Java%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9AJava%E7%A8%8B%E5%BA%8F%E4%BC%98%E5%8C%96/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            Java程序性能优化（四）：Java程序优化
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2020/09/17/Java%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9A%E8%AE%BE%E8%AE%A1%E4%BC%98%E5%8C%96%E4%B9%8B%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Java程序性能优化（二）：设计优化之设计模式</div>
+      </a>
+    
+  </nav>
+
+   
+ 
+     
+</article>
+
 </section>
       <footer class="footer">
   <div class="outer">
@@ -215,6 +287,23 @@
 <script src="/js/lazyload.min.js"></script>
 
 <!-- Tocbot -->
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">

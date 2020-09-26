@@ -9,7 +9,7 @@
     
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>
-    Java程序性能优化（二）：设计优化之设计模式 |  KorbinC
+    Java程序性能优化（四）：Java程序优化 |  KorbinC
   </title>
   <meta name="generator" content="hexo-theme-ayer">
   
@@ -44,7 +44,7 @@
     <main class="content on">
       <section class="outer">
   <article
-  id="post-Java程序性能优化（二）：设计优化之设计模式"
+  id="post-Java程序性能优化（四）：Java程序优化"
   class="article article-type-post"
   itemscope
   itemprop="blogPost"
@@ -55,15 +55,15 @@
     <header class="article-header">
        
 <h1 class="article-title sea-center" style="border-left:0" itemprop="name">
-  Java程序性能优化（二）：设计优化之设计模式
+  Java程序性能优化（四）：Java程序优化
 </h1>
  
 
     </header>
      
     <div class="article-meta">
-      <a href="/2020/09/17/Java%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9A%E8%AE%BE%E8%AE%A1%E4%BC%98%E5%8C%96%E4%B9%8B%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" class="article-date">
-  <time datetime="2020-09-16T16:00:00.000Z" itemprop="datePublished">2020-09-17</time>
+      <a href="/2020/09/24/Java%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9AJava%E7%A8%8B%E5%BA%8F%E4%BC%98%E5%8C%96/" class="article-date">
+  <time datetime="2020-09-23T16:00:00.000Z" itemprop="datePublished">2020-09-24</time>
 </a> 
   <div class="article-category">
     <a class="article-category-link" href="/categories/Java/">Java</a>
@@ -74,7 +74,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">1.6k</span>
+            <span class="post-count">1.4k</span>
         </span>
     </span>
 
@@ -98,61 +98,57 @@
   
     <div class="article-entry" itemprop="articleBody">
        
-  <p>本篇文章是葛一鸣《Java程序性能优化》读书笔记的第二篇，主要内容有常用的与性能相关的设计模式。<a id="more"></a></p>
-<h3 id="设计模式"><a href="#设计模式" class="headerlink" title="设计模式"></a>设计模式</h3><p>设计模式是对某一特定问题的成熟的解决方案。</p>
-<h4 id="单例模式"><a href="#单例模式" class="headerlink" title="单例模式"></a>单例模式</h4><p>确保系统中一个类只产生一个实例。对于频繁使用的对象，可以省略创建对象所花费的时间，另外，由于new操作的次数减少，对内存使用频率会降低，将减轻GC压力，缩短GC停顿时间。</p>
-<p>单例类必须要有一个private访问级别的构造函数。可分为饿汉和懒汉两种类型的单例模式。</p>
-<p>序列化和反序列化可能会破坏单例。</p>
-<h4 id="代理模式"><a href="#代理模式" class="headerlink" title="代理模式"></a>代理模式</h4><p>使用代理对象完成用户请求，屏蔽用户对真实对象的访问。使用代理模式可能是出于安全原因，也可能是为了提升系统性能，延迟加载真实对象。</p>
-<p>代理模式的主要参与者有4个：</p>
+  <p>本篇文章是葛一鸣《Java程序性能优化》读书笔记的第四篇，主要从代码层面对程序进行优化，内容有字符串优化、核心数据结构优化和NIO等。<a id="more"></a></p>
+<h3 id="字符串优化">字符串优化</h3>
+<p>String底层是char数组，String对象有3个基本特点：</p>
 <ul>
-<li>主题接口：定义代理类和真实类的公共对外方法。</li>
-<li>真实主题：真正实现业务逻辑的类。</li>
-<li>代理类：用来代理和封装真实主题。</li>
-<li>Main：客户端，使用代理类和主题接口完成一些工作。</li>
+<li>不变性：String对象一旦生成则不能再进行改变，当多个线程共享一个String对象并且访问频繁时，可以省略同步和锁等待的时间，从而大幅度提高系统性能。</li>
+<li>针对常量池的优化：当两个String对象拥有相同的值时，只会引用常量池中的同一个拷贝，这样当一个字符串反复出现时，可以大幅度节省内存空间。</li>
+<li>类的final定义：String对象不可能有任何子类，这是对系统安全性的考虑。</li>
 </ul>
-<p>在系统启动时，将消耗资源最多的方法都使用代理模式分离，就可以加快系统的启动速度，减少用户等待的时间。</p>
-<p>延迟加载的核心思想是：如果当前并没有使用这个组件，则不需要真正地初始化它，使用一个代理对象替代它的位置，只要在真正使用的时候才对它进行加载。</p>
-<h5 id="动态代理"><a href="#动态代理" class="headerlink" title="动态代理"></a>动态代理</h5><p>动态代理是指在运行时动态生成代理类，即代理类的字节码将在运行时生成并载入当前的ClassLoader。与静态代理类相比，动态类不需要为真实主题写一个形式上完全一样的封装类，其次，一些动态代理的生成方法甚至可以在运行时指定代理类的执行逻辑，从而大大提升系统的灵活性。</p>
-<p>生成动态代理类的方法有：JDK自带的动态代理，CGLIB，Javassist或者ASM库。</p>
-<p>实现动态代理的基本步骤：</p>
-<p>根据指定的回调类生成Class字节码—–&gt;通过defineClass()将字节码定义为类—–&gt;使用反射机制生成该类的实例</p>
-<h4 id="享元模式"><a href="#享元模式" class="headerlink" title="享元模式"></a>享元模式</h4><p>享元模式以提高系统性能为目的，核心思想是：如果一个系统中存在多个相同的对象，那么只需共享一份对象的拷贝，而不必为每一次使用都创建新的对象。在享元模式中，常常会有一个工厂类来维护和创建对象。</p>
-<p>享元模式对性能提升的主要帮助有两点：</p>
+<h4 id="substring-方法的内存泄漏">subString()方法的内存泄漏</h4>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> String <span class="title">substring</span><span class="params">(<span class="keyword">int</span> beginIdx)</span></span></span><br><span class="line"><span class="function"><span class="keyword">public</span> String <span class="title">substring</span><span class="params">(<span class="keyword">int</span> beginIdx, <span class="keyword">int</span> endIdx)</span></span></span><br></pre></td></tr></table></figure>
+<p>在substring()方法内会返回一个新建的String对象，它的构造函数如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">String(<span class="keyword">int</span> offset, <span class="keyword">int</span> count, <span class="keyword">char</span> value[]) &#123;</span><br><span class="line">    <span class="keyword">this</span>.value = value;</span><br><span class="line">    <span class="keyword">this</span>.offset = offset;</span><br><span class="line">    <span class="keyword">this</span>.count = count;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这是通过偏移量来决定实际取值，比如有字符串str为&quot;abcdefghijklmn&quot;，通过偏移量和长度返回&quot;ab&quot;，但是截取的字符串实际上仍包含了原生字符串的所有内容，并占据了相应的空间，只是通过偏移量和长度来决定自己的实际取值，这种做法提高了运算速度却也浪费了大量的内存空间，是空间换时间的策略。</p>
+<p>substring()可能会导致程序所占用的内存不断扩大，直到溢出，虽然Full GC不停地工作，但每次释放的每次都很微少。这是因为substring()方法调用了String(int offset, int count, char value[])构造函数，它采用了空间换时间的手段。</p>
+<h4 id="字符串分割和查找">字符串分割和查找</h4>
+<p>三种分割方法性能对比如下：</p>
+<p><img src="/2020/09/24/Java%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9AJava%E7%A8%8B%E5%BA%8F%E4%BC%98%E5%8C%96/%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%88%86%E5%89%B2%E6%80%A7%E8%83%BD%E6%AF%94%E8%BE%83.PNG" alt="字符串分割性能比较"></p>
+<p>charAt()方法具有很高的效率，适合高频率地调用。</p>
+<p>String对象进行修改操作的时候总是会生成新的对象，所以其性能相对较差，可使用StringBuffer和StringBuilder类创建经常需要修改的字符串对象。</p>
+<p>Java底层对String字符串累加操作进行了优化：</p>
 <ul>
-<li>可以节省重复创建对象的开销。</li>
-<li>由于创建对象的数量减少，所以对系统内存的需求也减小，使得GC的压力也相应地降低，进而使得系统拥有一个更健康的内存结构和更快的反应速度。</li>
+<li>对静态字符串的连接操作，会在编译时进行彻底的优化，将多个连接操作的字符串在编译时合成一个单独的长字符串</li>
+<li>对于变量字符串的累加，底层使用了StringBuilder对象进行字符串的累加</li>
+<li>String的加法操作虽然会被优化，但编译器并不足够聪明，故应少用”+“和”+=“这种操作，其次，String的concat()方法效率远远高于&quot;+“和”+=&quot;运算符，但又远远低于StringBuilder类。</li>
 </ul>
-<p>享元模式的主要角色有：</p>
-<ul>
-<li>享元工厂：用以创建具体享元类，维护相同的享元对象。</li>
-<li>抽象享元：定义需共享的对象的业务接口。</li>
-<li>具体享元类：实现抽象享元类的接口，完成某一具体逻辑。</li>
-<li>Main：使用享元模式的组件，通过享元工厂取得享元对象。</li>
-</ul>
-<p>结构如图所示：</p>
-<p><img src="/2020/09/17/Java%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9A%E8%AE%BE%E8%AE%A1%E4%BC%98%E5%8C%96%E4%B9%8B%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E4%BA%AB%E5%85%83%E6%A8%A1%E5%BC%8F%E7%B1%BB%E5%9B%BE.PNG" alt="享元模式类图"></p>
-<h4 id="装饰者模式"><a href="#装饰者模式" class="headerlink" title="装饰者模式"></a>装饰者模式</h4><p>装饰者模式可以动态添加对象功能，通过委托机制，复用系统中的各个组件，在运行时将功能组件进行叠加，从而构造一个拥有所以这些组件的功能。装饰者模式可以有效分离性能组件和功能组件，从而提升模块的可维护性并增加模块的复用性。</p>
-<p>装饰者模式的主要角色有：</p>
-<ul>
-<li>组件接口：是装饰者和被装饰者的超类或者接口，定义了被装饰者的核心功能和装饰者需要加强的功能点。</li>
-<li>具体组件：具体组件实现了组件接口的核心方法，完成具体的业务逻辑，也是被装饰的对象。</li>
-<li>装饰者：实现组件接口，并持有一个具体的被装饰者对象。</li>
-<li>具体装饰者：具体实现装饰的业务逻辑。</li>
-</ul>
-<p>JDK中的OutputStream和InputStream类族的实现是装饰者模式的典型应用，通过嵌套的方式不断将对象聚合起来，工作流程如图所示：</p>
-<p><img src="/2020/09/17/Java%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9A%E8%AE%BE%E8%AE%A1%E4%BC%98%E5%8C%96%E4%B9%8B%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B.PNG" alt="观察者模式的工作流程"></p>
-<h4 id="观察者模式"><a href="#观察者模式" class="headerlink" title="观察者模式"></a>观察者模式</h4><p>观察者模式可以用于事件监听、通知发布等场合，可以确保观察者在不使用轮询监控的情况下，及时收到相关消息和事件。</p>
-<p>观察者模式的主要角色如下：</p>
-<ul>
-<li>主题接口：被观察的对象状态发生改变时，会将这个变化通知观察者，它维护了观察者所需要依赖的状态。</li>
-<li>具体主题：实现了主题接口中的方法，如新增观察者、删除观察者和通知观察者，其内部维护一个观察者列表。</li>
-<li>观察者接口：定义了观察者的基本方法，当依赖状态发生改变时，主题接口会调用观察者的update()方法。</li>
-<li>具体观察者，实现了观察者接口的update()方法。</li>
-</ul>
-<p><img src="/2020/09/17/Java%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9A%E8%AE%BE%E8%AE%A1%E4%BC%98%E5%8C%96%E4%B9%8B%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F%E7%BB%93%E6%9E%84.PNG" alt="观察者模式结构"></p>
-<h4 id="Value-Object-模式"><a href="#Value-Object-模式" class="headerlink" title="Value Object 模式"></a>Value Object 模式</h4><p>Value Object模式提倡将一个对象的各个属性进行封装，将封装后的对象在网络中传递，从而使系统拥有更好的交互模型，并且减少网络通信数据，从而提高系统性能。对象必须是一个可串行化的对象。</p>
-<h4 id="业务代理模式"><a href="#业务代理模式" class="headerlink" title="业务代理模式"></a>业务代理模式</h4><p>业务代理模式将一组由远程方法调用构成的业务流程，封装在一个位于展示层的代理类中，即将一些业务流程封装在前台系统，为系统性能优化提供了基础平台。</p>
+<p>StringBuffer对几乎所有方法都做了同步，而StringBuilder没有，故StringBuilder不能保证线程安全。</p>
+<h3 id="核心数据结构">核心数据结构</h3>
+<p>在java.util包内提供了很多常用的数据结构，如List、Map、Set。</p>
+<h4 id="list接口">List接口</h4>
+<p><img src="/2020/09/24/Java%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9AJava%E7%A8%8B%E5%BA%8F%E4%BC%98%E5%8C%96/List%E7%B1%BB%E6%97%8F.PNG" alt="List类族"></p>
+<p>ArrayList和Vector底层都是数组，区别是Vector绝大部分方法都做了线程同步，而ArrayList没有。LinkedList使用了循环双向链表的结构。</p>
+<p>对于ArrayList这种基于数组的实现，随机访问速度很快，而LinkedList等基于链表的实现，随机访问性能则很差。</p>
+<h4 id="map接口">Map接口</h4>
+<p><img src="/2020/09/24/Java%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9AJava%E7%A8%8B%E5%BA%8F%E4%BC%98%E5%8C%96/Map%E7%B1%BB%E6%97%8F.PNG" alt="Map类族"></p>
+<p>HashTable的大部分方法都做了同步，而HashMap没有，故HashMap不是线程安全的。</p>
+<p>HashMap是将key做hash算法，然后将hash值映射到内存地址，直接取得key所对应的数据，HashMap的取值操作是高效的。</p>
+<p>HashMap实际上是一种链表的数组，只要hashCode()和hash()方法实现得足够好，能够尽可能地减少冲突的产生，那么对HashMap的操作几乎等价于对数组的随机访问操作，具有很好的性能。</p>
+<p>HashMap和ArrayList、Vector一样，底层是一个数组，故空间不足时需要拓展，较费时间，而设置合理的初始大小和负载因子可以减少扩容的次数。</p>
+<p>LinkedHashMap继承自HashMap，高性能的同时也是有序的，有两种类型的顺序：一是元素插入时的顺序，二是最近访问的顺序。可以通过以下构造函数进行定义：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">LinkedHashMap</span><span class="params">(<span class="keyword">int</span> initialCapacity, <span class="keyword">float</span> loadFactor, <span class="keyword">boolean</span> accessOrder)</span></span></span><br></pre></td></tr></table></figure>
+<p>其中accessOrder为true时，安装元素最后访问时间排序，为false时，则按照插入顺序，默认为false。</p>
+<p>TreeMap虽然性能较HashMap差一些，但能够基于元素的固有顺序进行排序，由Comparable或Comparator确定。TreeMap是根据key进行排序，故为了确定key的排序方式，可以两种方式指定：</p>
+<p>一是在构造函数中注入一个Comparator，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">TreeMap</span><span class="params">(Comparator&lt;? <span class="keyword">super</span> K&gt; comparator)</span></span></span><br></pre></td></tr></table></figure>
+<p>二是使用一个实现了Comparable接口的key。</p>
+<p>而且TreeMap的排序是必须实现的。</p>
+<h4 id="set接口">Set接口</h4>
+<p>Set集合中的元素是不能重复的，HashSet的输出毫无规律，LinkedHashSet的输出顺序和输入顺序完全一致，TreeSet则将所有输出从小到大排序。</p>
+<h4 id="randomaccess接口">RandomAccess接口</h4>
+<p>RandomAccess接口是一个标志性接口，本身并没有提供任何方法，任何实现该接口的对象都可以认为是支持快速随机访问的对象，该接口的主要目的是标识那些支持快速随机访问的List实现。任何一个基于数组的List都实现了RandomAccess接口，而基于链表的没有。</p>
+<p>对于没有实现RandomAccess接口的List而言，其随机访问性能是极低的。</p>
  
       <!-- reward -->
       
@@ -177,7 +173,7 @@
     
     <footer class="article-footer">
        
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" rel="tag">性能优化</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E9%9B%86%E5%90%88/" rel="tag">集合</a></li></ul>
 
     </footer>
   </div>
@@ -185,19 +181,10 @@
    
   <nav class="article-nav">
     
+    
       <a href="/2020/09/23/Java%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E5%B8%B8%E7%94%A8%E4%BC%98%E5%8C%96%E7%BB%84%E4%BB%B6%E5%92%8C%E6%96%B9%E6%B3%95/" class="article-nav-link">
-        <strong class="article-nav-caption">上一篇</strong>
-        <div class="article-nav-title">
-          
-            Java程序性能优化（三）：常用优化组件和方法
-          
-        </div>
-      </a>
-    
-    
-      <a href="/2020/09/14/Java-%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9AJava%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E6%A6%82%E8%BF%B0/" class="article-nav-link">
         <strong class="article-nav-caption">下一篇</strong>
-        <div class="article-nav-title">Java 程序性能优化（一）：Java性能调优概述</div>
+        <div class="article-nav-title">Java程序性能优化（三）：常用优化组件和方法</div>
       </a>
     
   </nav>
