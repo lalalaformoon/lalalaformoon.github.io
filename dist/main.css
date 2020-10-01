@@ -15,22 +15,22 @@ html {
     line-height: 1.15
 }
 h1 {
-    font-size: 30px
-}
-h2 {
     font-size: 28px
 }
-h3 {
+h2 {
     font-size: 26px
 }
-h4 {
+h3 {
     font-size: 24px
 }
-h5 {
+h4 {
     font-size: 21px
 }
-h6 {
+h5 {
     font-size: 18px
+}
+h6 {
+    font-size: 15px
 }
 hr {
     box-sizing: content-box;
@@ -74,7 +74,8 @@ sup {
     top: -.5em
 }
 img {
-    border-style: none
+    border-style: none;
+    width: 60%
 }
 button, input, optgroup, select, textarea {
     font-family: inherit;
@@ -149,7 +150,8 @@ body, html {
     height: 100%
 }
 html {
-    font-size: 62.5%;
+    /*font-size: 62.5%;*/
+    font-size: 59%;
     -ms-overflow-style: scrollbar;
     -webkit-tap-highlight-color: transparent
 }
@@ -161,7 +163,7 @@ body {
     position: relative;
     background-color: #fff;
     font-family: Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft YaHei, 微软雅黑, Arial, sans-serif;
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     line-height: 1.7;
     color: #403e3e;
     padding: 0;
@@ -1052,9 +1054,9 @@ button {
 .tocbot {
     padding: 20px;
     position: absolute;
-    right: -28rem;
+    right: -24rem;
     top: 14rem;
-    font-size: 80%;
+    font-size: 78%;
     opacity: .95;
     max-width: 255px;
     border-radius: 8px
@@ -1085,7 +1087,7 @@ a.toc-link {
 .is-position-fixed {
     position: fixed!important;
     top: 0;
-    right: 6rem;
+    right: 2rem;
     background-color: #fff;
     z-index: 996
 }
