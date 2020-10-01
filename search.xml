@@ -1,6 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>ZooKeeper相关概念</title>
+    <url>/2020/09/30/ZooKeeper%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5/</url>
+    <content><![CDATA[<p>ZooKeeper是一个分布式、开源的分布式应用程序协调服务，它公开了一组简单的原语，分布式应用程序可以基于这些原语来实现更高级别的同步、配置维护、组和命名服务。ZooKeeper目的是减轻分布式应用程序从零开始实现协调服务的任务。本文基于3.6.2版本。<a id="more"></a></p>
+<h3 id="数据模型，Data-Model"><a href="#数据模型，Data-Model" class="headerlink" title="数据模型，Data Model"></a>数据模型，Data Model</h3><p>ZooKeeper有个分层命名空间，就像是一棵树，每个节点能够关联数据，节点的路径都是绝对路径，不允许使用相对路径。关于路径命名还有一些要求：</p>
+<ul>
+<li>“zookeeper”是保留字，不允许使用</li>
+<li>“.” 和 “..” 可以作为命名的一部分，但不允许单独使用，如”a/./b”是不被允许的</li>
+</ul>
+<h4 id="ZNodes"><a href="#ZNodes" class="headerlink" title="ZNodes"></a>ZNodes</h4><p>ZooKeeper中的节点被称为znode，znode会维护一个stat结构，其中包括数据更改与ACL更改的版本号，时间戳，有了版本号和时间戳，ZooKeeper能够去验证缓存和协调更新。版本号会随着znode数据的更改而增长，当客户端获取数据时也会获取到数据的版本号，当客户端对数据进行更新或删除操作时，ZooKeeper会对版本号进行比对验证，若不匹配则操作失败。</p>
+<p>Znode是程序员访问的主要实体，它们有几个值得一提的特点：</p>
+<ul>
+<li>监听机制，客户端可以对znode进行监听，当znode发生改变时会触发监听器并且清除监听器，监听器一旦被触发，客户端会收到一个通知。</li>
+<li>每个znode上的数据读写都是具有原子性的，每个节点都会有一个ACL（访问控制列表）来限制谁可以做什么。</li>
+<li>ZooKeeper并不适合存储大量数据，它被设计来管理协调性数据，这些数据可以是配置、状态信息等，它们相对较小，以千字节为单位，如果非得在ZooKeeper中大容量存储数据，可以将数据存储在其他大容量存储系统中，并在ZooKeeper中存储指向数据存储位置的指针。ZooKeeper一开始的设计目的就不是为了存储大容量数据，而是为了协调数据，还会对节点的数据进行管理，使每个节点的数据不会超过1M。</li>
+<li>临时节点，Ephemeral Nodes，只要创建临时节点的会话还存在，临时节点就会存在，当会话结束时，临时节点则会被删除，所以<strong>临时节点不允许有子节点</strong>。会话的临时节点列表可以通过<code>getEphemerals()</code>进行获取。</li>
+<li>唯一命名，当创建节点时，ZooKeeper可以在节点路径的最后加上一个单调递增的计数器，该计数器对该节点的父节点来说是唯一的，计数器的格式为10位数字，填充0，例如“0000000001”，计数器为4字节有符号整数，当超过2147483647时会溢出。</li>
+<li>容器节点，Container Nodes，在3.6.0版本加入，当容器节点的最后一个子节点被删除，那么该容器节点在未来的某个时刻将被服务端删除。考虑到这个属性，当创建容器节点的子节点时可能会出现<code>KeeperException.NoNodeException</code>异常，此时应该重新创建父容器节点。</li>
+<li>TTL节点，在3.6.0版本加入，可以为节点设置一个以毫秒为单位的TTL，当在TTL时间内节点没有被更改，那么该节点在未来的某个时刻将被删除。TTL节点默认是禁用状态，需要在系统属性中启用。</li>
+</ul>
+<h4 id="ZooKeeper中的时间"><a href="#ZooKeeper中的时间" class="headerlink" title="ZooKeeper中的时间"></a>ZooKeeper中的时间</h4><ul>
+<li><strong>Zxid</strong>，ZooKeeper使用的时间戳，ZooKeeper状态的每次改变都会收到一个zxid形式的时间戳，每次更改都会有唯一的zxid，当zxid1小于zxid2时，说明zxid1在zxid2前发生。</li>
+<li><strong>版本号</strong>，每个节点都会有自己的版本号，节点发生变化时版本号会递增，有三个版本号：version（znode数据的更改次数）、cversion（znode子节点的更改次数）、aversion（znode的ACL更改次数）。</li>
+<li><strong>心跳时间</strong>，当使用多服务器ZooKeeper时，服务器使用心跳来定义事件的时间，例如状态上传、会话超时、连接超时等，心跳时间间接公开了最小会话时间，最小会话时间是两倍心跳时间，如果客户端请求会话的时间小于最小会话时间，那么服务端会告诉客户端请求会话的时间就是最小会话时间。</li>
+<li><strong>真实时间</strong>，ZooKeeper不会使用真实时间，除了在创建或修改节点时需要在stat结构中放入时间戳。</li>
+</ul>
+<h4 id="Stat-结构"><a href="#Stat-结构" class="headerlink" title="Stat 结构"></a>Stat 结构</h4><p>每个节点都会有stat结构，它包含：</p>
+<ul>
+<li><strong>czxid</strong>，该节点被创建时所生成的zxid</li>
+<li><strong>mzxid</strong>，该节点上一次被修改时所生成的zxid</li>
+<li><strong>pzxid</strong>，该节点上一次被修改的子节点所生成的zxid</li>
+<li><strong>ctime</strong>，该节点被创建时的时间戳，以毫秒为单位</li>
+<li><strong>mtime</strong>，该节点上一次被修改时的时间戳，以毫秒为单位</li>
+<li><strong>version</strong>，该节点的数据的更改次数</li>
+<li><strong>cversion</strong>，该节点的子节点的更改次数</li>
+<li><strong>aversion</strong>，该节点的ACL更改次数</li>
+<li><strong>ephemeralOwner</strong>，该临时节点所属的session id，若不是临时节点，则为0</li>
+<li><strong>dataLength</strong>，该节点数据字段的长度</li>
+<li><strong>numChildren</strong>，该节点的子节点数量</li>
+</ul>
+<h3 id="会话，Sessions"><a href="#会话，Sessions" class="headerlink" title="会话，Sessions"></a>会话，Sessions</h3><p>客户端和服务端通过创建句柄的方式来进行连接，就是会话，会话一旦建立成功，状态就是<code>CONNECTING</code>（连接中），然后客户端就会尝试去连接服务端，连接成功后状态会变为<code>CONNECTED</code>（已连接），正常情况下只会有这两种状态。如果发生不可恢复的错误，例如会话过期、身份验证失败或者客户端关闭连接，那么session状态会变为<code>CLOSE</code>（关闭）。下图是会话状态的转换过程。</p>
+<p><img src="/2020/09/30/ZooKeeper%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5/%E4%BC%9A%E8%AF%9D%E7%8A%B6%E6%80%81%E8%BD%AC%E6%8D%A2.jpg" alt="会话状态转换"></p>
+<p>为了创建一个会话，代码中必须提供一个逗号<code>,</code>分隔的字符串，例如：<code>127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002</code>，包含<code>host:port</code>，客户端会任意选择一个服务端进行连接，如果连接失败或者因为某些原因连接断开，那么客户端会重新连接下一个服务端，直到连接成功。</p>
+<h4 id="3-2-0版本新增特性"><a href="#3-2-0版本新增特性" class="headerlink" title="3.2.0版本新增特性"></a>3.2.0版本新增特性</h4><p>3.2.0版本新增特性：可以选择在连接字符串增加一个<code>chroot</code>后缀，例如：<code>127.0.0.1:4545/app/a</code>，在这种情况下，我们访问的<code>/foo/bar</code>其实是ZooKeeper服务端的<code>/app/a/foo/bar</code>节点。</p>
+<p>3.2.0版本新增特性：<code>SessionMovedException</code>异常，这是一个内部异常，一般不会被应有程序接触到，发生此异常是因为在另一个服务端上重新建立会话连接的时候收到了请求。例如，一个客户端向服务端A发送请求，但因为网络延迟，所以该客户端超时并连接到新的服务端B，当延迟的数据包到达服务端A时，服务端A会检测到会话已移动，并关闭客户端连接，客户端通常不会看到此错误，因为它们不从那些旧连接中读取数据。还有个比较特殊的情况，当两个客户端尝试使用保存的会话id和密码重新建立同一个服务端时，会出现客户端A重新建立连接，客户端B断开连接，紧接着客户端B就会重连，导致客户端A断开连接，这样会导致这两个客户端尝试无限期地重新建立会话连接。</p>
+<h4 id="会话连接"><a href="#会话连接" class="headerlink" title="会话连接"></a>会话连接</h4><p>客户端跟服务端进行连接的一个参数是会话过期时间，单位为毫秒，客户端会把请求的会话过期时间发给服务端，服务端会返回一个它可以接受的时间，要求是：<code>tickTime*2 &lt;= session timeout &lt;= tickTime*20</code>。</p>
+<p>客户端跟服务端进行连接的另一个参数是默认的观察者，当客户端发生任何状态更改的时候都会通知观察者，在创建一个新连接的情况下，发送给观察者的第一个事件通常是会话连接事件。</p>
+<p>当建立一个会话时，服务端会生成一个64位的数字，作为session的标识，并分配给客户端。如果客户端连接到不同的ZooKeeper服务器，它将发送会话id作为连接握手的一部分。作为安全措施，服务端为会话id创建一个密码，任何ZooKeeper服务端都可以验证每当客户端与服务端重新建立会话时，会同时传递session id和密码，服务端验证通过才会建立连接。</p>
+<p>如果客户端和服务端集群断开连接后，能在会话超时时间内重新连接上，那么session状态会重新变为<code>CONNECTED</code>，如果在会话超时后重新连接上，那么会话状态将转换到<code>EXPIRED</code>。当会话连接断开的时候，不需要我们自己去重新建立一个新的会话，因为客户端会自动重新连接。只有在明确知道会话状态为<code>EXPIRATION</code>过期状态，我们才需要手动重新创建新的会话。</p>
+<p>会话是否过期是由服务端集群管理的，客户端并不能自己管理自己是否过期。当超过会话时间，服务端还没有收到客户端的心跳的话，就会把这个会话标记为过期，然后删除这个会话所创建的所有临时节点，并且通知所有监听了这个节点的会话。在这个时候，客户端和服务端是断开连接的，但它们重连成功，客户端会收到自己被标记为过期这一通知，而在没有重连成功之前，客户端是不会收到过期通知的。</p>
+<p>如果会话空闲一段时间，客户端会发送PING请求以保持会话的活动状态。</p>
+<h4 id="服务器列表更新"><a href="#服务器列表更新" class="headerlink" title="服务器列表更新"></a>服务器列表更新</h4><p>更新服务器列表，客户端允许使用一个新的连接字符串来更新服务列表，这会使用一个负载均衡算法来重新平衡各个客户端和服务端的连接情况，所以会导致部分客户端断开连接并重新连接到其他服务端。</p>
+<h4 id="本地会话"><a href="#本地会话" class="headerlink" title="本地会话"></a>本地会话</h4><p>本地会话，Local Session，在3.5.0版本加入，因为会话的创建和关闭需要耗费较多资源和性能，当ZooKeeper需要处理数千个客户端连接时，它们就是性能的瓶颈，所以在3.5.0版本中加入了本地会话，它们并没有普通（全局）会话的所有功能，可以通过启用<code>localSessionsEnabled</code>来使用本地会话。可以使用<code>localSessionsUpgradingEnabled</code>来限制本地会话升级到全局会话。</p>
+<h3 id="监听机制，Watches"><a href="#监听机制，Watches" class="headerlink" title="监听机制，Watches"></a>监听机制，Watches</h3><p>ZooKeeper的所有读操作，<code>getData()</code>，<code>getChildren()</code>，<code>exists()</code>，都可以选择是否设置观察者，ZooKeeper关于监听机制的定义是，监视事件是一次性触发器，当客户端所监视的数据发生更改时，它会收到一个通知。对于监听机制来说，有三个主要特性：</p>
+<ul>
+<li><strong>一次性触发</strong>，观察事件会在观察的数据更改时被主动发送给客户端，但只会发送一次。</li>
+<li><strong>发送给客户端</strong>，除非客户端已经收到了监视事件，否则它绝对不会知道监视的数据已经发生更改，即使网络延时或者一些其他的因素导致不同的客户端收到的事件不一致，但是可以保证不同的客户端收到的事件提醒的顺序都是一致的。</li>
+<li><strong>观察者观察的数据</strong>，ZooKeeper服务端会维护两个观察者列表：<strong>数据观察者</strong>和<strong>子节点观察者</strong>。<code>getData()</code>和<code>exists()</code>设置的是数据观察者，<code>getChildren()</code>设置的是子节点观察者。因此，一个成功的<code>setData()</code>会触发数据观察者，一个成功的<code>create()</code>和<code>delete()</code>会触发这个节点的数据观察者和这个节点的父节点的子节点观察者。</li>
+</ul>
+<h4 id="观察者的语义"><a href="#观察者的语义" class="headerlink" title="观察者的语义"></a>观察者的语义</h4><p>上面提到<code>exists()</code>，<code>getData()</code>，<code>getChildren()</code>都可以设置观察者，下面列出了不同的事件类型以及对应的观察者：</p>
+<ul>
+<li>Created event，创建类型，通过<code>exists</code>启用</li>
+<li>Deleted event，删除类型，通过<code>exists</code>，<code>getData</code>，<code>getChildren</code>启用</li>
+<li>Changed event，改变类型，通过<code>exists</code>，<code>getData</code>启用</li>
+<li>Child event，子节点类型，通过<code>getChildren</code>启用</li>
+</ul>
+<h4 id="永久监听，递归监听"><a href="#永久监听，递归监听" class="headerlink" title="永久监听，递归监听"></a>永久监听，递归监听</h4><p>在3.6.0版本加入，客户端可以设置永久的，递归的观察者，这些观察者在被触发的时候不会被删除，并且会递归地监听设置的节点及其子节点。</p>
+<h4 id="删除观察者"><a href="#删除观察者" class="headerlink" title="删除观察者"></a>删除观察者</h4><p>服务端可以通过调用<code>removeWatches</code>来删除观察者，客户端也可以将本地标志设置为true来删除本地观察者，即使没有与服务端连接。下面列出了成功移除观察者后将触发的事件：</p>
+<ul>
+<li>子节点移除事件：通过调用<code>getChildren</code>添加的观察者</li>
+<li>数据节点移除事件：通过调用<code>exists</code>或<code>getData</code>添加的观察者</li>
+<li>永久节点移除事件：移除永久观察者</li>
+</ul>
+<h4 id="关于监听机制的保证"><a href="#关于监听机制的保证" class="headerlink" title="关于监听机制的保证"></a>关于监听机制的保证</h4><ul>
+<li>监视是根据其他事件、其他监视和异步响应排序的，ZooKeeper客户端保证所有内容都是按顺序发送的</li>
+<li>客户端只有接收到所监听的节点的观察事件后，才能看到该节点对应的新数据</li>
+<li>ZooKeeper的监视事件顺序与ZooKeeper服务看到的更新顺序相对应</li>
+</ul>
+<h3 id="使用ACL进行访问控制"><a href="#使用ACL进行访问控制" class="headerlink" title="使用ACL进行访问控制"></a>使用ACL进行访问控制</h3><p>ZooKeeper使用ACL对节点进行访问控制，提供以下权限：</p>
+<ul>
+<li><strong>CREATE</strong>：可以创建子节点</li>
+<li><strong>READ</strong>：可以从节点读取数据并列出其子节点</li>
+<li><strong>WRITE</strong>：可以往节点写入数据</li>
+<li><strong>DELETE</strong>：可以删除子节点</li>
+<li><strong>ADMIN</strong>：可以设置权限</li>
+</ul>
+<h3 id="一致性保证，Consistency-Guarantees"><a href="#一致性保证，Consistency-Guarantees" class="headerlink" title="一致性保证，Consistency Guarantees"></a>一致性保证，Consistency Guarantees</h3><p>ZooKeeper是一种高性能、可伸缩的服务。读和写操作都设计得很快，虽然读操作会较快些，这是因为在读操作的情况下，ZooKeeper还可以为较旧的数据提供服务，这是由于ZooKeeper的一致性保证：</p>
+<ul>
+<li>顺序一致性：客户端的更新请求将按发送的顺序应用</li>
+<li>原子性：更新成功或失败都是原子的，没有中间结果</li>
+<li>单一系统映像：无论连接到哪个服务器，客户端都讲看到相同的服务视图，即使客户端因为故障转移到具有相同会话的其他服务器，客户端也永远不会看到系统的旧视图</li>
+<li>可靠性：一旦更新完成，它将从那时起一直持续到客户端覆盖更新为止</li>
+<li>时效性：客户端对系统的视图保证在一定的时间范围内是最新的（大约几十秒），即客户端能在一个确定的时间内得到最新的数据</li>
+</ul>
+<br>
+
+<p>参考：</p>
+<p><a href="https://zookeeper.apache.org/doc/r3.6.2/zookeeperProgrammers.html" target="_blank" rel="noopener">ZooKeeper官方文档</a></p>
+]]></content>
+      <categories>
+        <category>ZooKeeper</category>
+      </categories>
+      <tags>
+        <tag>分布式</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Java程序性能优化（四）：Java程序优化</title>
     <url>/2020/09/24/Java%E7%A8%8B%E5%BA%8F%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9AJava%E7%A8%8B%E5%BA%8F%E4%BC%98%E5%8C%96/</url>
     <content><![CDATA[<p>本篇文章是葛一鸣《Java程序性能优化》读书笔记的第四篇，主要从代码层面对程序进行优化，内容有字符串优化、核心数据结构优化和NIO等。<a id="more"></a></p>
