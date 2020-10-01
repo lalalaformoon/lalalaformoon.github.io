@@ -74,8 +74,8 @@ sup {
     top: -.5em
 }
 img {
-    border-style: none;
-    width: 60%
+    border-style: none
+    /*width: 60%*/
 }
 button, input, optgroup, select, textarea {
     font-family: inherit;
@@ -294,7 +294,8 @@ button {
     margin: 1.5rem 0
 }
 .article-entry img, .article-entry video {
-    max-width: 100%;
+    max-width: 80%;
+    width: 60%;
     height: auto;
     display: block;
     margin: auto
@@ -873,20 +874,23 @@ button {
     margin-top: 0
 }
 .article-header {
-    position: relative
+    position: relative;
+    height: 80%
 }
 .article-header h1, .article-header h2 {
     margin: 0
 }
 .article-header .article-title {
     display: block;
-    font-size: 34px;
-    font-weight: 700;
+    font-size: 25px;
+    font-weight: 600;
     margin-bottom: 3rem;
     text-decoration: none;
     color: #403e3e;
     padding-left: 2rem;
-    border-left: 4px solid #403e3e
+    border-left: 4px solid #403e3e;
+    padding-top: -1rem;
+    padding-bottom: -1rem
 }
 .article-footer:after, .article-footer:before {
     content: "";
@@ -1263,14 +1267,14 @@ a.toc-link {
     border-radius: 6px
 }
 .articles .article {
-    padding: 4.5rem 0
+    padding: 3rem 0
 }
 .articles .article:not(:last-child) {
     border-bottom: .1rem solid #ddd
 }
 .articles .article-entry {
     margin-top: 1rem;
-    padding: 0 2rem 2rem;
+    padding: 0 1rem 1rem 1rem;
     border: 1px dashed #dfdede
 }
 .articles .article-entry .article-more-link {
@@ -1280,7 +1284,8 @@ a.toc-link {
     padding: .5rem 1rem;
     border-radius: 4px;
     color: #fff!important;
-    text-decoration: none
+    text-decoration: none;
+    margin-top: -1rem
 }
 .articles .article-entry .article-gallery {
     margin-top: 1.5rem
@@ -2035,7 +2040,8 @@ pre .css~* .id, pre .id {
 .navbar {
     position: relative;
     padding-top: 3rem;
-    text-align: center
+    text-align: center;
+    font-size: 1.5rem
 }
 .navbar .nav {
     list-style: none;
