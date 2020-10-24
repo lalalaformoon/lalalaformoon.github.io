@@ -1,6 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Redis：链表</title>
+    <url>/2020/10/24/Redis%EF%BC%9A%E9%93%BE%E8%A1%A8/</url>
+    <content><![CDATA[<p>链表在 Redis 中的应用非常广泛， 比如列表键的底层实现之一就是链表。<a id="more"></a></p>
+<h3 id="链表和链表节点的实现">链表和链表节点的实现</h3>
+<p>每个链表节点使用一个 <code>adlist.h/listNode</code> 结构来表示：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">typedef struct listNode &#123;</span><br><span class="line">    &#x2F;&#x2F; 前置节点</span><br><span class="line">    struct listNode *prev;</span><br><span class="line">    &#x2F;&#x2F; 后置节点</span><br><span class="line">    struct listNode *next;</span><br><span class="line">    &#x2F;&#x2F; 节点的值</span><br><span class="line">    void *value;</span><br><span class="line">&#125; listNode;</span><br></pre></td></tr></table></figure>
+<p>多个 <code>listNode</code> 可以通过 <code>prev</code> 和 <code>next</code> 指针组成双向链表。</p>
+<p>虽然仅仅使用多个 <code>listNode</code> 结构就可以组成链表， 但使用 <code>adlist.h/list</code> 来持有链表的话， 操作起来会更方便：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">typedef struct list &#123;</span><br><span class="line">    &#x2F;&#x2F; 表头节点</span><br><span class="line">    listNode *head;</span><br><span class="line">    &#x2F;&#x2F; 表尾节点</span><br><span class="line">    listNode *tail;</span><br><span class="line">    &#x2F;&#x2F; 链表所包含的节点数量</span><br><span class="line">    unsigned long len;</span><br><span class="line">    &#x2F;&#x2F; 节点值复制函数</span><br><span class="line">    void *(*dup)(void *ptr);</span><br><span class="line">    &#x2F;&#x2F; 节点值释放函数</span><br><span class="line">    void (*free)(void *ptr);</span><br><span class="line">    &#x2F;&#x2F; 节点值对比函数</span><br><span class="line">    int (*match)(void *ptr, void *key);</span><br><span class="line">&#125; list;</span><br></pre></td></tr></table></figure>
+<p><code>list</code> 结构为链表提供了表头指针 <code>head</code> 、表尾指针 <code>tail</code> ， 以及链表长度计数器 <code>len</code> ， 而 <code>dup</code> 、 <code>free</code> 和 <code>match</code> 成员则是用于实现多态链表所需的类型特定函数：</p>
+<ul>
+<li><code>dup</code> 函数用于复制链表节点所保存的值；</li>
+<li><code>free</code> 函数用于释放链表节点所保存的值；</li>
+<li><code>match</code> 函数则用于对比链表节点所保存的值和另一个输入值是否相等。</li>
+</ul>
+<p>list和listNode组成的链表如下：</p>
+<p><img src="/2020/10/24/Redis%EF%BC%9A%E9%93%BE%E8%A1%A8/%E9%93%BE%E8%A1%A8.PNG" alt="链表"></p>
+<h3 id="特性总结">特性总结</h3>
+<p>Redis 的链表实现的特性可以总结如下：</p>
+<ul>
+<li>双向： 链表节点带有 <code>prev</code> 和 <code>next</code> 指针， 获取某个节点的前置节点和后置节点的复杂度都是 O(1) 。</li>
+<li>无环： 表头节点的 <code>prev</code> 指针和表尾节点的 <code>next</code> 指针都指向 <code>NULL</code> ， 对链表的访问以 <code>NULL</code> 为终点。</li>
+<li>带表头指针和表尾指针： 通过 <code>list</code> 结构的 <code>head</code> 指针和 <code>tail</code> 指针， 程序获取链表的表头节点和表尾节点的复杂度为 O(1) 。</li>
+<li>带链表长度计数器： 程序使用 <code>list</code> 结构的 <code>len</code> 属性来对 <code>list</code> 持有的链表节点进行计数， 程序获取链表中节点数量的复杂度为 O(1) 。</li>
+<li>多态： 链表节点使用 <code>void*</code> 指针来保存节点值， 并且可以通过 <code>list</code> 结构的 <code>dup</code> 、 <code>free</code> 、 <code>match</code> 三个属性为节点值设置类型特定函数， 所以链表可以用于保存各种不同类型的值。</li>
+</ul>
+<br>
+<p>参考：</p>
+<p>1、<a href="http://redisbook.com/" target="_blank" rel="noopener">Redis设计与实现</a></p>
+]]></content>
+      <categories>
+        <category>Redis</category>
+      </categories>
+      <tags>
+        <tag>链表</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Redis：简单动态字符串</title>
     <url>/2020/10/24/Redis%EF%BC%9A%E7%AE%80%E5%8D%95%E5%8A%A8%E6%80%81%E5%AD%97%E7%AC%A6%E4%B8%B2/</url>
     <content><![CDATA[<p>简单动态字符串，Simple Dynamic String，简称SDS，是Redis的默认字符串表示。<a id="more"></a></p>
