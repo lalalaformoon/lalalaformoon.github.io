@@ -1,6 +1,119 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Redis：简单动态字符串</title>
+    <url>/2020/10/24/Redis%EF%BC%9A%E7%AE%80%E5%8D%95%E5%8A%A8%E6%80%81%E5%AD%97%E7%AC%A6%E4%B8%B2/</url>
+    <content><![CDATA[<p>简单动态字符串，Simple Dynamic String，简称SDS，是Redis的默认字符串表示。<a id="more"></a></p>
+<h3 id="sds的定义">SDS的定义</h3>
+<p>每个sds.h/sdsdhr结构表示一个SDS值：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">sdshdr</span> &#123;</span></span><br><span class="line">    <span class="comment">// 记录 buf 数组中已使用字节的数量</span></span><br><span class="line">    <span class="comment">// 等于 SDS 所保存字符串的长度</span></span><br><span class="line">    <span class="keyword">int</span> len;</span><br><span class="line">    <span class="comment">// 记录 buf 数组中未使用字节的数量</span></span><br><span class="line">    <span class="keyword">int</span> <span class="built_in">free</span>;</span><br><span class="line">    <span class="comment">// 字节数组，用于保存字符串</span></span><br><span class="line">    <span class="keyword">char</span> buf[];</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>应当注意的是，这里的buf数组是称为<strong>字节</strong>数组，跟C语言用来表示字符串的<strong>字符</strong>数组不同，Redis中的数据是以二进制的形式保存在buf数组中的。</p>
+<p>下图是一个SDS的示例：</p>
+<p><img src="/2020/10/24/Redis%EF%BC%9A%E7%AE%80%E5%8D%95%E5%8A%A8%E6%80%81%E5%AD%97%E7%AC%A6%E4%B8%B2/SDS%E7%A4%BA%E4%BE%8B.PNG" alt="SDS示例"></p>
+<ul>
+<li>free属性的值为5，表示这个SDS为buf数组分配了5字节未使用空间；</li>
+<li>len属性的值为5，表示这个SDS保存了一个5字节长的字符串；</li>
+<li>buf属性是一个char类型的数组，前5个字节分别保存了’R’、‘e’、‘d’、‘i’、‘s’五个字符，第6个字节保存了空字符’\0’。</li>
+</ul>
+<p>SDS遵循C字符串以空字符结尾的惯例，并且保存空字符的1字节空间不计算在len属性里面。为空字符分配额外的空间、添加空字符到结尾等操作都是由SDS函数自动完成，所以这个空字符对于SDS的使用者是完全透明的。</p>
+<h3 id="sds与c字符串的区别">SDS与C字符串的区别</h3>
+<p>C语言使用长度为N+1的字符数组来表示长度为N的字符串，并且字符数组的最后一个元素总是空字符’\0’，例如下图：</p>
+<p><img src="/2020/10/24/Redis%EF%BC%9A%E7%AE%80%E5%8D%95%E5%8A%A8%E6%80%81%E5%AD%97%E7%AC%A6%E4%B8%B2/C%E5%AD%97%E7%AC%A6%E4%B8%B2.PNG" alt="C字符串"></p>
+<p>但是，C字符串这种简单的表示方式并不能满足Redis对字符串在安全性、效率以及功能方面的要求。</p>
+<h4 id="常数复杂度获取字符串长度">常数复杂度获取字符串长度</h4>
+<p>因为C字符串不记录自身的长度信息， 所以为了获取一个C字符串的长度， 程序必须遍历整个字符串， 这个操作的复杂度为 O(N) 。和C字符串不同， 因为SDS在len属性中记录了SDS本身的长度， 所以获取一个 SDS 长度的复杂度仅为 O(1) 。</p>
+<p>设置和更新SDS长度的工作是由SDS的API在执行时自动完成的，故无需手动修改。</p>
+<p>通过使用SDS而不是C字符串， Redis将获取字符串长度所需的复杂度从 O(N) 降低到了 O(1) ， 这确保了获取字符串长度的工作不会成为Redis的性能瓶颈。</p>
+<h4 id="杜绝缓冲区溢出">杜绝缓冲区溢出</h4>
+<p>除了获取字符串长度的复杂度高之外，C字符串不记录自身长度带来的另一个问题是容易造成缓冲区溢出（buffer overflow）。</p>
+<p>例如，<code>&lt;string.h&gt;/strcat</code> 函数可以将 <code>src</code> 字符串中的内容拼接到 <code>dest</code> 字符串的末尾：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">char</span> *<span class="title">strcat</span><span class="params">(<span class="keyword">char</span> *dest, <span class="keyword">const</span> <span class="keyword">char</span> *src)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>因为 C 字符串不记录自身的长度， 所以 <code>strcat</code> 假定用户在执行这个函数时， 已经为 <code>dest</code> 分配了足够多的内存， 可以容纳 <code>src</code> 字符串中的所有内容， 而一旦这个假定不成立时， 就会产生缓冲区溢出。</p>
+<p>比如内存有两个紧邻的字符串：</p>
+<p><img src="/2020/10/24/Redis%EF%BC%9A%E7%AE%80%E5%8D%95%E5%8A%A8%E6%80%81%E5%AD%97%E7%AC%A6%E4%B8%B2/%E7%B4%A7%E9%82%BB%E5%AD%97%E7%AC%A6%E4%B8%B2.PNG" alt="紧邻字符串"></p>
+<p>这时通过执行：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">strcat(s1, &quot; Cluster&quot;);</span><br></pre></td></tr></table></figure>
+<p>将 <code>s1</code> 的内容修改为 <code>&quot;Redis Cluster&quot;</code> ，但在执行 <code>strcat</code> 之前为 <code>s1</code> 分配足够的空间， 那么在 <code>strcat</code> 函数执行之后， <code>s1</code> 的数据将溢出到 <code>s2</code> 所在的空间中， 导致 <code>s2</code> 保存的内容被意外地修改，如下图：</p>
+<p><img src="/2020/10/24/Redis%EF%BC%9A%E7%AE%80%E5%8D%95%E5%8A%A8%E6%80%81%E5%AD%97%E7%AC%A6%E4%B8%B2/%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%BA%A2%E5%87%BA.PNG" alt="字符串溢出"></p>
+<p>而与C字符串不同，SDS的空间分配策略完全杜绝了发生缓冲区溢出的可能性：当SDS API需要对SDS进行修改时，API会先检查SDS的空间是否满足修改所需的要求，如果不满足的话，API会自动将SDS的空间扩展至执行修改所需的大小，然后才执行实际的修改操作，所以使用SDS既不需要手动修改SDS的空间大小，也不会出现前面所说的缓冲区溢出问题。</p>
+<h4 id="减少修改字符串时带来的内存重分配次数">减少修改字符串时带来的内存重分配次数</h4>
+<p>对于C字符串来说，每次增长或缩短一个C字符串，程序都要对保存这个C字符串的数组进行一次内存重分配操作：</p>
+<ul>
+<li>如果是增长字符串，比如拼接操作（append），那在执行之前需要先通过内存重分配来扩展底层数组的空间大小，否则可能会产生缓冲区溢出；</li>
+<li>如果是缩短字符串，比如截断操作（trim），那在执行之前需要通过内存重分配来释放字符串不再使用的那部分空间，否则会产生内存泄漏。</li>
+</ul>
+<p>因为内存重分配涉及复杂的算法，并且可能需要执行系统调用，所以它通常是一个比较耗时的操作，而Redis作为数据库，数据会被频繁修改，且对速度要求严苛，那频繁发生内存重分配会对性能造成影响。</p>
+<p>为了避免C字符串的这种缺陷，SDS通过未使用空间解除了字符串长度和底层数组长度之间的关联：在SDS中，<code>buf</code>数组的长度不一定就是字符数量加一，数组里面可以包含未使用的字节，而这些字节的数量就由SDS的<code>free</code>属性记录。</p>
+<p>通过未使用空间，SDS实现了空间预分配和惰性空间释放两种优化策略。</p>
+<h5 id="空间预分配">空间预分配</h5>
+<p>空间预分配用于优化SDS的字符串增长操作：当对一个 SDS 进行修改， 并且需要进行空间扩展的时候， 程序不仅会为SDS分配修改所必需的空间，还会为SDS分配额外的未使用空间。</p>
+<p>分配规则如下：</p>
+<ul>
+<li>如果对SDS进行修改之后，SDS的长度（也即是 <code>len</code> 属性的值）将小于 <code>1 MB</code> ， 那么程序分配和 <code>len</code> 属性同样大小的未使用空间， 这时 SDS <code>len</code> 属性的值将和 <code>free</code> 属性的值相同。举个例子， 如果进行修改之后， SDS 的 <code>len</code> 将变成 <code>13</code> 字节， 那么程序也会分配 <code>13</code> 字节的未使用空间， SDS 的 <code>buf</code> 数组的实际长度将变成 <code>13 + 13 + 1 = 27</code> 字节（额外的一字节用于保存空字符）。</li>
+<li>如果对SDS进行修改之后， SDS 的长度将大于等于 <code>1 MB</code> ， 那么程序会分配 <code>1 MB</code> 的未使用空间。</li>
+</ul>
+<p>通过空间预分配策略，SDS将连续增长 <code>N</code> 次字符串所需的内存重分配次数从必定 <code>N</code> 次降低为最多 <code>N</code> 次。</p>
+<h5 id="惰性空间释放">惰性空间释放</h5>
+<p>惰性空间释放用于优化SDS的字符串缩短操作：当需要缩短SDS保存的字符串时，程序并不立即使用内存重分配来回收缩短后多出来的字节， 而是使用 <code>free</code> 属性将这些字节的数量记录起来， 并等待将来使用。</p>
+<p>例如，有这样一个SDS：</p>
+<p><img src="/2020/10/24/Redis%EF%BC%9A%E7%AE%80%E5%8D%95%E5%8A%A8%E6%80%81%E5%AD%97%E7%AC%A6%E4%B8%B2/%E7%BC%A9%E7%9F%AD%E5%89%8D.PNG" alt="缩短前"></p>
+<p>对它执行：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">sdstrim(s, <span class="string">"XY"</span>);   <span class="comment">// 移除 SDS 字符串中的所有 'X' 和 'Y'</span></span><br></pre></td></tr></table></figure>
+<p>那么该SDS会变成：</p>
+<p><img src="/2020/10/24/Redis%EF%BC%9A%E7%AE%80%E5%8D%95%E5%8A%A8%E6%80%81%E5%AD%97%E7%AC%A6%E4%B8%B2/%E7%BC%A9%E7%9F%AD%E5%90%8E.PNG" alt="缩短后"></p>
+<p>执行 <code>sdstrim</code> 之后的SDS并没有释放多出来的8字节空间， 而是将这8字节空间作为未使用空间保留在了SDS里面， 如果将来要对SDS进行增长操作的话， 这些未使用空间就可能会派上用场。</p>
+<p>通过惰性空间释放策略，SDS避免了缩短字符串时所需的内存重分配操作，并为将来可能有的增长操作提供了优化。</p>
+<p>与此同时，SDS也提供了相应的API,让我们可以在有需要时，真正地释放SDS里面的未使用空间， 所以不用担心惰性空间释放策略会造成内存浪费。</p>
+<h4 id="二进制安全">二进制安全</h4>
+<p>因为C 字符串中的字符必须符合某种编码（比如 ASCII），并且除了字符串的末尾之外，字符串里面不能包含空字符，否则最先被程序读入的空字符将被误认为是字符串结尾，这些限制使得 C 字符串只能保存文本数据，而不能保存像图片、音频、视频、压缩文件这样的二进制数据。</p>
+<p>但SDS可以以二进制的方式来处理存放在buf数组的数据，并不会对其中的数据做任何限制、过滤或者假设，数据写入时是怎样的，被读取时就是怎样的。这也是由于SDS的buf属性是<strong>字节</strong>数组的原因，Redis不是用这个数组来保存字符，而是用它来保存一系列二进制数据。</p>
+<p>而且，SDS使用len属性来保存字符串长度，而不需要依据空字符来判断字符串是否结束，故可以保存图片、音频等特殊数据格式。</p>
+<h4 id="兼容部分c字符串函数">兼容部分C字符串函数</h4>
+<p>SDS遵循C字符串以空字符结尾的惯例，会将保存的数据末尾设置为空字符，且会为buf数组多分配一个字节来容纳这个空字符，这是为了让那些保存文本数据的SDS可以重用一部分&lt;string.h&gt;库定义的函数，从而避免不必要的代码重复。</p>
+<h4 id="总结">总结</h4>
+<p>C字符串和SDS之间的区别：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">C 字符串</th>
+<th style="text-align:left">SDS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">获取字符串长度的复杂度为 O(N) 。</td>
+<td style="text-align:left">获取字符串长度的复杂度为 O(1) 。</td>
+</tr>
+<tr>
+<td style="text-align:left">API 是不安全的，可能会造成缓冲区溢出。</td>
+<td style="text-align:left">API 是安全的，不会造成缓冲区溢出。</td>
+</tr>
+<tr>
+<td style="text-align:left">修改字符串长度 <code>N</code> 次必然需要执行 <code>N</code> 次内存重分配。</td>
+<td style="text-align:left">修改字符串长度 <code>N</code> 次最多需要执行 <code>N</code> 次内存重分配。</td>
+</tr>
+<tr>
+<td style="text-align:left">只能保存文本数据。</td>
+<td style="text-align:left">可以保存文本或者二进制数据。</td>
+</tr>
+<tr>
+<td style="text-align:left">可以使用所有 <code>&lt;string.h&gt;</code> 库中的函数。</td>
+<td style="text-align:left">可以使用一部分 <code>&lt;string.h&gt;</code> 库中的函数。</td>
+</tr>
+</tbody>
+</table>
+<br>
+<p>参考：</p>
+<p>1、<a href="http://redisbook.com/" target="_blank" rel="noopener">Redis设计与实现</a></p>
+]]></content>
+      <categories>
+        <category>Redis</category>
+      </categories>
+      <tags>
+        <tag>SDS</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Java NIO 缓冲区和通道</title>
     <url>/2020/10/08/Java-NIO-%E7%BC%93%E5%86%B2%E5%8C%BA%E5%92%8C%E9%80%9A%E9%81%93/</url>
     <content><![CDATA[<p>Java NIO是在Java1.4版本中引入的，可以替代标准的Java IO API，NIO与原来的IO有同样的作用和目的，但是使用方式完全不同，NIO支持面向缓冲区的、基于通道的IO操作。NIO能以更加高效的方式进行文件的读写操作。<a id="more"></a></p>
@@ -65,7 +178,7 @@
 <p>示例：</p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* 非直接缓冲区，利用通道</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">test2</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    FileInputStream fis = <span class="keyword">new</span> FileInputStream(<span class="string">"1.jpg"</span>);</span><br><span class="line">    FileOutputStream fos = <span class="keyword">new</span> FileOutputStream(<span class="string">"2.jpg"</span>);</span><br><span class="line"></span><br><span class="line">    FileChannel inChannel = fis.getChannel();</span><br><span class="line">    FileChannel outChannel = fos.getChannel();</span><br><span class="line"></span><br><span class="line">    ByteBuffer buffer = ByteBuffer.allocate(<span class="number">1024</span>);</span><br><span class="line">    <span class="keyword">while</span> (inChannel.read(buffer) != -<span class="number">1</span>) &#123;</span><br><span class="line">        buffer.flip();</span><br><span class="line">        outChannel.write(buffer);</span><br><span class="line">        buffer.clear();</span><br><span class="line">    &#125;</span><br><span class="line">    outChannel.close();</span><br><span class="line">    inChannel.close();</span><br><span class="line">    fos.close();</span><br><span class="line">    fis.close();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* 直接缓冲区，利用内存映射文件</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">test3</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    FileChannel inChannel = FileChannel.open(Paths.get(<span class="string">"1.jpg"</span>), StandardOpenOption.READ);</span><br><span class="line">    FileChannel outChannel = FileChannel.open(Paths.get(<span class="string">"2.jpg"</span>), StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE_NEW);</span><br><span class="line"></span><br><span class="line">    MappedByteBuffer inMappedBuffer = inChannel.map(MapMode.READ_ONLY, <span class="number">0</span>, inChannel.size());</span><br><span class="line">    MappedByteBuffer outMappedBuffer = outChannel.map(MapMode.READ_WRITE, <span class="number">0</span>, inChannel.size());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">byte</span>[] dst = <span class="keyword">new</span> <span class="keyword">byte</span>[inMappedBuffer.limit()];</span><br><span class="line">    inMappedBuffer.get(dst);</span><br><span class="line">    outMappedBuffer.put(dst);</span><br><span class="line"></span><br><span class="line">    outChannel.close();</span><br><span class="line">    inChannel.close();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h5 id="通道直接的数据传输">通道直接的数据传输</h5>
+<h5 id="通道之间的数据传输">通道之间的数据传输</h5>
 <p><code>transferFrom()</code>和<code>transferTo()</code>，这两个方法也是用直接缓冲区的方式。</p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 直接缓冲区</span></span><br><span class="line">inChannel.transferTo(<span class="number">0</span>, inChannel.size(), outChannel);</span><br></pre></td></tr></table></figure>
 <h5 id="分散-scatter-与聚集-gather">分散（Scatter）与聚集（Gather）</h5>
