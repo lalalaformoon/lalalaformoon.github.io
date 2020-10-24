@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    Redis：字典 |  KorbinC
+  </title>
+  <meta name="generator" content="hexo-theme-ayer">
+  
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  
+<link rel="stylesheet" href="/dist/main.css">
+
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Shen-Yu/cdn/css/remixicon.min.css">
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+  
+  
+<script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+
+  
+  
+
+  
+
+<link href="https://cdn.bootcss.com/KaTeX/0.11.1/katex.min.css" rel="stylesheet" /></head>
+
+</html>
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="post-Redis：字典"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Redis：字典
+</h1>
+ 
+
+    </header>
+     
+    <div class="article-meta">
+      <a href="/2020/10/24/Redis%EF%BC%9A%E5%AD%97%E5%85%B8/" class="article-date">
+  <time datetime="2020-10-24T10:13:28.000Z" itemprop="datePublished">2020-10-24</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/Redis/">Redis</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">2.6k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">9 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <p>字典在Redis中应用相当广泛，比如Redis的数据库就是使用字典来作为底层实现的，对数据库的增、删、查、改操作也是构建在对字典的操作之上的。<a id="more"></a></p>
+<h3 id="字典的实现">字典的实现</h3>
+<p>Redis的字典的底层实现使用哈希表，一个哈希表可以有多个哈希表节点，而每个哈希表节点就保存字典中的一个键值对。</p>
+<h4 id="哈希表">哈希表</h4>
+<p>哈希表由 <code>dict.h/dictht</code> 结构定义：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">typedef struct dictht &#123;</span><br><span class="line">    &#x2F;&#x2F; 哈希表数组</span><br><span class="line">    dictEntry **table;</span><br><span class="line">    &#x2F;&#x2F; 哈希表大小</span><br><span class="line">    unsigned long size;</span><br><span class="line">    &#x2F;&#x2F; 哈希表大小掩码，用于计算索引值</span><br><span class="line">    &#x2F;&#x2F; 总是等于 size - 1</span><br><span class="line">    unsigned long sizemask;</span><br><span class="line">    &#x2F;&#x2F; 该哈希表已有节点的数量</span><br><span class="line">    unsigned long used;</span><br><span class="line">&#125; dictht;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>
+<p><code>table</code> 属性是一个数组， 数组中的每个元素都是一个指向 <code>dict.h/dictEntry</code> 结构的指针， 每个 <code>dictEntry</code> 结构保存着一个键值对；</p>
+</li>
+<li>
+<p><code>size</code> 属性记录了哈希表的大小， 也即是 <code>table</code> 数组的大小， 而 <code>used</code> 属性则记录了哈希表目前已有节点（键值对）的数量；</p>
+</li>
+<li>
+<p><code>sizemask</code> 属性的值总是等于 <code>size - 1</code> ， 这个属性和哈希值一起决定一个键应该被放到 <code>table</code> 数组的哪个索引上面。</p>
+</li>
+</ul>
+<h4 id="哈希表节点">哈希表节点</h4>
+<p>哈希表节点使用 <code>dict.h/dictEntry</code> 结构表示， 每个 <code>dictEntry</code> 结构都保存着一个键值对：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">typedef struct dictEntry &#123;</span><br><span class="line">    &#x2F;&#x2F; 键</span><br><span class="line">    void *key;</span><br><span class="line">    &#x2F;&#x2F; 值</span><br><span class="line">    union &#123;</span><br><span class="line">        void *val;</span><br><span class="line">        uint64_t u64;</span><br><span class="line">        int64_t s64;</span><br><span class="line">    &#125; v;</span><br><span class="line">    &#x2F;&#x2F; 指向下个哈希表节点，形成链表</span><br><span class="line">    struct dictEntry *next;</span><br><span class="line">&#125; dictEntry;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>
+<p><code>key</code> 属性保存着键值对中的键， 而 <code>v</code> 属性则保存着键值对中的值， 其中键值对的值可以是一个指针， 或者是一个 <code>uint64_t</code> 整数， 又或者是一个 <code>int64_t</code> 整数；</p>
+</li>
+<li>
+<p><code>next</code> 属性是指向另一个哈希表节点的指针， 这个指针可以将多个哈希值相同的键值对连接在一次， 以此来解决键冲突（collision）的问题。</p>
+</li>
+</ul>
+<h4 id="字典">字典</h4>
+<p>字典由 <code>dict.h/dict</code> 结构表示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">typedef struct dict &#123;</span><br><span class="line">    &#x2F;&#x2F; 类型特定函数</span><br><span class="line">    dictType *type;</span><br><span class="line">    &#x2F;&#x2F; 私有数据</span><br><span class="line">    void *privdata;</span><br><span class="line">    &#x2F;&#x2F; 哈希表</span><br><span class="line">    dictht ht[2];</span><br><span class="line">    &#x2F;&#x2F; rehash 索引</span><br><span class="line">    &#x2F;&#x2F; 当 rehash 不在进行时，值为 -1</span><br><span class="line">    int rehashidx; &#x2F;* rehashing not in progress if rehashidx &#x3D;&#x3D; -1 *&#x2F;</span><br><span class="line">&#125; dict;</span><br></pre></td></tr></table></figure>
+<p><code>type</code> 属性和 <code>privdata</code> 属性是针对不同类型的键值对， 为创建多态字典而设置的：</p>
+<ul>
+<li><code>type</code> 属性是一个指向 <code>dictType</code> 结构的指针， 每个 <code>dictType</code> 结构保存了一簇用于操作特定类型键值对的函数， Redis 会为用途不同的字典设置不同的类型特定函数；</li>
+<li>而 <code>privdata</code> 属性则保存了需要传给那些类型特定函数的可选参数。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">typedef struct dictType &#123;</span><br><span class="line">    &#x2F;&#x2F; 计算哈希值的函数</span><br><span class="line">    unsigned int (*hashFunction)(const void *key);</span><br><span class="line">    &#x2F;&#x2F; 复制键的函数</span><br><span class="line">    void *(*keyDup)(void *privdata, const void *key);</span><br><span class="line">    &#x2F;&#x2F; 复制值的函数</span><br><span class="line">    void *(*valDup)(void *privdata, const void *obj);</span><br><span class="line">    &#x2F;&#x2F; 对比键的函数</span><br><span class="line">    int (*keyCompare)(void *privdata, const void *key1, const void *key2);</span><br><span class="line">    &#x2F;&#x2F; 销毁键的函数</span><br><span class="line">    void (*keyDestructor)(void *privdata, void *key);</span><br><span class="line">    &#x2F;&#x2F; 销毁值的函数</span><br><span class="line">    void (*valDestructor)(void *privdata, void *obj);</span><br><span class="line">&#125; dictType;</span><br></pre></td></tr></table></figure>
+<p><code>ht</code> 属性是一个包含两个项的数组， 数组中的每个项都是一个 <code>dictht</code> 哈希表， 一般情况下， 字典只使用 <code>ht[0]</code> 哈希表， <code>ht[1]</code> 哈希表只会在对 <code>ht[0]</code> 哈希表进行 rehash 时使用。</p>
+<p>除了 <code>ht[1]</code> 之外， 另一个和 rehash 有关的属性就是 <code>rehashidx</code> ： 它记录了 rehash 目前的进度， 如果目前没有在进行 rehash ， 那么它的值为 <code>-1</code> 。</p>
+<p>下图展示了一个普通状态下（没有进行 rehash）的字典：</p>
+<p><img src="/2020/10/24/Redis%EF%BC%9A%E5%AD%97%E5%85%B8/%E6%99%AE%E9%80%9A%E5%AD%97%E5%85%B8.PNG" alt="普通字典"></p>
+<h3 id="哈希算法">哈希算法</h3>
+<p>当将一个新的键值对添加到字典里面时， 程序会先根据键值对的键计算出哈希值<code>hash</code>和索引值<code>index</code>， 然后再根据索引值， 将包含新键值对的哈希表节点放到哈希表数组的指定索引上面。</p>
+<p>计算哈希值会用到字典中设置的哈希函数，Redis不同版本使用的哈希算法并不一样，比如MurmurHash、SipHash，而计算索引值会用到sizemask属性，索引值计算方式如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">index = hash &amp; dict-&gt;ht[x].sizemask;</span><br></pre></td></tr></table></figure>
+<h3 id="解决键冲突">解决键冲突</h3>
+<p>当有两个或以上数量的键被分配到了哈希表数组的同一个索引上面时， 我们称这些键发生了冲突（collision）。</p>
+<p>Redis 的哈希表使用<strong>链地址法</strong>（separate chaining）来解决键冲突： 每个哈希表节点都有一个 <code>next</code> 指针， 多个哈希表节点可以用 <code>next</code> 指针构成一个单向链表， 被分配到同一个索引上的多个节点可以用这个单向链表连接起来， 这就解决了键冲突的问题。</p>
+<p>因为 <code>dictEntry</code> 节点组成的链表没有指向链表表尾的指针， 所以为了速度考虑， 程序总是将新节点添加到链表的<strong>表头位置</strong>（复杂度为 O(1)）， 排在其他已有节点的前面。</p>
+<h3 id="rehash">rehash</h3>
+<p>rehash，也就是重新散列，当哈希表保存的键值对过多或过少时，就会通过执行rehash来对哈希表的大小进行相应的扩展或收缩。</p>
+<p>Redis 对字典的哈希表执行 rehash 的步骤如下：</p>
+<ol>
+<li>为字典的<code>ht[1]</code>哈希表分配空间， 这个哈希表的空间大小取决于要执行的操作， 以及<code>ht[0]</code>当前包含的键值对数量 （也即是<code>ht[0].used</code>属性的值）：
+<ul>
+<li>如果执行的是扩展操作， 那么 <code>ht[1]</code> 的大小为第一个大于等于 <code>ht[0].used * 2</code> 的 2^n （<code>2</code> 的 <code>n</code> 次方幂）；</li>
+<li>如果执行的是收缩操作， 那么 <code>ht[1]</code> 的大小为第一个大于等于 <code>ht[0].used</code> 的 2^n 。</li>
+</ul>
+</li>
+<li>将保存在 <code>ht[0]</code> 中的所有键值对 rehash 到 <code>ht[1]</code> 上面： rehash 指的是重新计算键的哈希值和索引值， 然后将键值对放置到 <code>ht[1]</code> 哈希表的指定位置上。</li>
+<li>当 <code>ht[0]</code> 包含的所有键值对都迁移到了 <code>ht[1]</code> 之后 （<code>ht[0]</code> 变为空表）， 释放 <code>ht[0]</code> ， 将 <code>ht[1]</code> 设置为 <code>ht[0]</code> ， 并在 <code>ht[1]</code> 新创建一个空白哈希表， 为下一次 rehash 做准备。</li>
+</ol>
+<h4 id="哈希表的扩展与收缩">哈希表的扩展与收缩</h4>
+<p>当以下条件中的任意一个被满足时， 程序会自动开始对哈希表执行扩展操作：</p>
+<ol>
+<li>服务器目前没有在执行 BGSAVE 命令或者 BGREWRITEAOF 命令， 并且哈希表的负载因子大于等于 <code>1</code> ；</li>
+<li>服务器目前正在执行 BGSAVE 命令或者 BGREWRITEAOF 命令， 并且哈希表的负载因子大于等于 <code>5</code> ；</li>
+</ol>
+<p>其中哈希表的负载因子的计算公式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># 负载因子 &#x3D; 哈希表已保存节点数量 &#x2F; 哈希表大小</span><br><span class="line">load_factor &#x3D; ht[0].used &#x2F; ht[0].size</span><br></pre></td></tr></table></figure>
+<p>根据 BGSAVE 命令或 BGREWRITEAOF 命令是否正在执行，服务器执行扩展操作所需的负载因子并不相同，这是因为在执行 BGSAVE 命令或 BGREWRITEAOF 命令的过程中，Redis 需要创建当前服务器进程的子进程，而大多数操作系统都采用写时复制（copy-on-write）技术来优化子进程的使用效率， 所以在子进程存在期间，服务器会提高执行扩展操作所需的负载因子，从而尽可能地避免在子进程存在期间进行哈希表扩展操作，这可以避免不必要的内存写入操作，最大限度地节约内存。</p>
+<p>另一方面，当哈希表的负载因子小于 <code>0.1</code> 时，程序自动开始对哈希表执行收缩操作。</p>
+<h3 id="渐进式rehash">渐进式rehash</h3>
+<p>实际上，rehash动作并不是一次性、集中式地完成的，而是分多次、渐进式地完成的。这是考虑到哈希表保存的键值对数量非常庞大时，一次性完成rehash可能导致服务器在一段时间内停止服务。</p>
+<p>渐进式rehash的详细步骤如下：</p>
+<ol>
+<li>为 <code>ht[1]</code> 分配空间， 让字典同时持有 <code>ht[0]</code> 和 <code>ht[1]</code> 两个哈希表。</li>
+<li>在字典中维持一个索引计数器变量 <code>rehashidx</code> ， 并将它的值设置为 <code>0</code> ， 表示 rehash 工作正式开始。</li>
+<li>在 rehash 进行期间， 每次对字典执行添加、删除、查找或者更新操作时， 程序除了执行指定的操作以外， 还会顺带将 <code>ht[0]</code> 哈希表在 <code>rehashidx</code> 索引上的所有键值对 rehash 到 <code>ht[1]</code> ， 当 rehash 工作完成之后， 程序将 <code>rehashidx</code> 属性的值增一。</li>
+<li>随着字典操作的不断执行， 最终在某个时间点上， <code>ht[0]</code> 的所有键值对都会被 rehash 至 <code>ht[1]</code> ， 这时程序将 <code>rehashidx</code> 属性的值设为 <code>-1</code> ， 表示 rehash 操作已完成。</li>
+</ol>
+<p>渐进式 rehash 的好处在于它采取分而治之的方式， 将 rehash 键值对所需的计算工作均滩到对字典的每个添加、删除、查找和更新操作上， 从而避免了集中式 rehash 而带来的庞大计算量。</p>
+<h4 id="渐进式rehash执行期间的哈希表操作">渐进式rehash执行期间的哈希表操作</h4>
+<p>因为在进行渐进式 rehash 的过程中， 字典会同时使用 <code>ht[0]</code> 和 <code>ht[1]</code> 两个哈希表， 所以在渐进式 rehash 进行期间， 字典的删除（delete）、查找（find）、更新（update）等操作会在两个哈希表上进行： 比如说， 要在字典里面查找一个键的话， 程序会先在 <code>ht[0]</code> 里面进行查找， 如果没找到的话， 就会继续到 <code>ht[1]</code> 里面进行查找， 诸如此类。</p>
+<p>另外， 在渐进式 rehash 执行期间， 新添加到字典的键值对一律会被保存到 <code>ht[1]</code> 里面， 而 <code>ht[0]</code> 则不再进行任何添加操作： 这一措施保证了 <code>ht[0]</code> 包含的键值对数量会只减不增， 并随着 rehash 操作的执行而最终变成空表。</p>
+<h3 id="个人想法">个人想法</h3>
+<p>从前面的SDS、链表到现在的字典，可以看到Redis的数据结构的思想就是尽可能去做封装，比如说链表，即使没有list这一层的封装也能直接使用，但是通过list的封装可以更加方便地使用管理各个链表节点，字典也是一样，通过dict对键值对数组进行管理，如果把dict去掉其实就是Java中Map的结构。</p>
+<br>
+<p>参考：</p>
+<p>1、<a href="http://redisbook.com/" target="_blank" rel="noopener">Redis设计与实现</a></p>
+ 
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%93%88%E5%B8%8C/" rel="tag">哈希</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%AD%97%E5%85%B8/" rel="tag">字典</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/10/24/Redis%EF%BC%9A%E9%93%BE%E8%A1%A8/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Redis：链表</div>
+      </a>
+    
+  </nav>
+
+   
+ 
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        <img src="/images/account.png" style="zoom:60%;"/>
+      </li>
+    </ul>
+    <ul>
+      <li>
+        Copyrights &copy;
+        2020
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+        
+        <span>
+  <span><i class="ri-user-3-fill"></i>访问人数:<span id="busuanzi_value_site_uv"></span></s>
+  <span class="division">|</span>
+  <span><i class="ri-eye-fill"></i>浏览次数:<span id="busuanzi_value_site_pv"></span></span>
+</span>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/moon.ico" alt="KorbinC"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/airpay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-2.0.3.min.js"></script>
+
+
+<script src="/js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+
+
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+<!-- ImageViewer -->
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+<!-- MathJax -->
+
+<!-- Katex -->
+
+
+    
+
+
+<!-- busuanzi  -->
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+
+
+<link rel="stylesheet" href="/css/clipboard.css">
+
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+<!-- CanvasBackground -->
+
+
+    
+  </div>
+</body>
+
+</html>
